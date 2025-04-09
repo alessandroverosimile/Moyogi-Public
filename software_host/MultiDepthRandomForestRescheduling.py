@@ -27,15 +27,18 @@ from tensorflow.keras import layers, models
 
 #librerie per siamese
 from tensorflow.keras import layers, Model
-#from karateclub import Graph2Vec
-#import networkx as nx
+from karateclub import Graph2Vec
+import networkx as nx
 import itertools
 
 #librerie per autoencoder pytorch
 import torch
 import torch.nn as nn
-#import torch_geometric.nn as pyg_nn
-#from torch_geometric.data import Data, DataLoader
+import torch_geometric.nn as pyg_nn
+from torch_geometric.data import Data, DataLoader
+import torch.optim as optim
+
+import pickle
 
 class EarlyStoppingByBatch(tf.keras.callbacks.Callback):
     def __init__(self, patience=5, verbose=0):
@@ -54,8 +57,8 @@ class EarlyStoppingByBatch(tf.keras.callbacks.Callback):
         else:
             self.wait += 1
             if self.wait >= self.patience:
-                if self.verbose > 0:
-                    print(f"Early stopping triggered after {self.wait} batches with no improvement.")
+                #if self.verbose > 0:
+                    #print(f"Early stopping triggered after {self.wait} batches with no improvement.")
                 self.model.stop_training = True
 
 class ProgressBarCallback(tf.keras.callbacks.Callback):
@@ -66,7 +69,7 @@ class ProgressBarCallback(tf.keras.callbacks.Callback):
     def on_predict_batch_end(self, batch, logs=None):
         # Calcola la percentuale completata
         progress = (batch + 1) / self.total_batches * 100
-        print(f"Inferenza completata: {progress:.2f}%")
+        #print(f"Inferenza completata: {progress:.2f}%")
 
 class GraphAutoencoder(nn.Module):
     def __init__(self, in_channels, hidden_channels, out_channels):
@@ -95,9 +98,36 @@ class GraphAutoencoder(nn.Module):
         x, edge_index = data.x, data.edge_index
         x = self.encoder(x, edge_index)
         x = torch.relu(x)
+        x = torch.mean(x, dim=0)
         return x
 
-def train_autoencoder(model, data_loader, optimizer, criterion, epochs=100):
+class EarlyStopping:
+    def __init__(self, patience=20, delta=0, save_best_model=True, model_path="best_model.pth"):
+        self.patience = patience  # Numero di epoche senza miglioramenti prima di fermarsi
+        self.delta = delta  # Cambiamento minimo nella perdita per essere considerato un miglioramento
+        self.best_loss = np.inf  # Inizializza la migliore perdita come infinita
+        self.counter = 0  # Conta le epoche senza miglioramenti
+        self.early_stop = False  # Flag per determinare quando fermare l'allenamento
+        self.save_best_model = save_best_model
+        self.model_path = model_path  # Dove salvare il miglior modello
+
+    def __call__(self, val_loss, model):
+        # Se la perdita valida è migliorata, aggiorna e resetta il contatore
+        if val_loss < self.best_loss - self.delta:
+            self.best_loss = val_loss
+            self.counter = 0
+            # Salva il modello con la perdita migliore
+            if self.save_best_model:
+                torch.save(model.state_dict(), self.model_path)
+        else:
+            self.counter += 1
+        
+        # Se il contatore supera la pazienza, fermati
+        if self.counter >= self.patience:
+            self.early_stop = True
+        return self.early_stop
+
+def train_autoencoder(model, data_loader, optimizer, criterion, epochs=10000, early_stopping=None):
     model.train()
     
     for epoch in range(epochs):
@@ -117,8 +147,15 @@ def train_autoencoder(model, data_loader, optimizer, criterion, epochs=100):
             
             total_loss += loss.item()
         
-        if epoch % 10 == 0:
-            print(f'Epoch {epoch}, Loss: {total_loss / len(data_loader)}')
+        avg_loss = total_loss / len(data_loader)
+
+        #if epoch % 10 == 0:
+            #print(f'Epoch {epoch}, Loss: {avg_loss}')
+
+        if early_stopping:
+            if early_stopping(avg_loss, model):
+                #print(f'Early stopping triggered at epoch: {epoch}')
+                break
 
 def get_graph_embeddings_autoencoder(model, graphs):
     model.eval()
@@ -126,12 +163,41 @@ def get_graph_embeddings_autoencoder(model, graphs):
     embeddings = []
     for graph in graphs:
         embedding = model.get_embeddings(graph)
-        embeddings.append(embedding.detach().cpu())
+        embeddings.append(embedding.detach().cpu().numpy().tolist())
     
     return embeddings
 
+def extract_tree_as_graph(tree):
+    num_nodes = tree.tree_.node_count
+    edges = []
+    node_features = []
+
+    for i in range(num_nodes):
+        # Caratteristiche per ogni nodo
+        feature_index = tree.tree_.feature[i]  # Indice della feature di split
+        split_value = tree.tree_.threshold[i]  # Valore di split
+        impurity = tree.tree_.impurity[i]  # Impurità (Gini o Entropia)
+        num_samples = tree.tree_.n_node_samples[i]  # Numero di campioni nel nodo
+        
+        # Costruisci il vettore delle caratteristiche del nodo
+        node_features.append([feature_index, split_value, impurity, num_samples])
+        
+        # Aggiungi gli archi tra il nodo padre e i figli
+        if tree.tree_.children_left[i] != tree.tree_.children_right[i]:  # Se il nodo non è una foglia
+            left = tree.tree_.children_left[i]
+            right = tree.tree_.children_right[i]
+            edges.append([i, left])  # Nodo padre -> figlio sinistro
+            edges.append([i, right])  # Nodo padre -> figlio destro
+    
+    edges = np.array(edges).T  # Ogni colonna è un arco tra due nodi
+    edge_index = torch.tensor(edges, dtype=torch.long)
+    node_features = np.array(node_features)
+    x = torch.tensor(node_features, dtype=torch.float)
+    return Data(x=x, edge_index=edge_index)
+
+
 class MultiDepthNeuralRandomForestClassifier:
-    def __init__(self, min_depth, max_depth, depth_distribution = None, total_estimators = 100, random_state = 3, kernel_constraint = True, rescheduling = False, exclude_columns=None, method='Hungarian', autoencoder = True, 
+    def __init__(self, min_depth, max_depth, depth_distribution = None, total_estimators = 100, random_state = 3, kernel_constraint = True, weighted=False, weighted_percentage = None, rescheduling = False, exclude_columns=None, method='Hungarian', autoencoder = True, 
             batch_size_mul=None,
             learning_rate=None,
             embedding_dim=None,
@@ -140,7 +206,12 @@ class MultiDepthNeuralRandomForestClassifier:
             mul_neurons=None,
             noise_std=None,
             margin=None,
-            dropout_rate=None):
+            dropout_rate=None,
+            lr_autoencoder=None,
+            batch_size_autoencoder=None,
+            optimizer_autoencoder=None,
+            save_trees=False,
+            folder=None):
         self.min_depth = min_depth
         self.max_depth = max_depth
         self.estimator_for_depth = np.ones(max_depth-min_depth+1,dtype='int')*int(total_estimators/(max_depth-min_depth+1))
@@ -156,6 +227,8 @@ class MultiDepthNeuralRandomForestClassifier:
 
         #Jacopo - variabile per il numero degli alberi
         self.total_estimators = total_estimators
+        self.weighted = weighted
+        self.weighted_percentage = weighted_percentage
 
         #Jacopo - variabile per mantenere il df delle predizioni degli alberi sul training set
         self.df_predictions_train = pd.DataFrame()
@@ -178,6 +251,13 @@ class MultiDepthNeuralRandomForestClassifier:
         self.noise_std = noise_std
         self.margin = margin
         self.dropout_rate = dropout_rate
+
+        self.lr_autoencoder = lr_autoencoder
+        self.batch_size_autoencoder = batch_size_autoencoder
+        self.optimizer_autoencoder = optimizer_autoencoder
+
+        self.save_trees = save_trees
+        self.folder = folder
 
     def build_model(self, input_shape, lambda_reg):
         seed = 1234
@@ -305,6 +385,7 @@ class MultiDepthNeuralRandomForestClassifier:
         y_val_ohe = self.to_ohe(y_val)
 
         model = self.build_model((self.n_classes*len(self.classifiers.keys()),1),0)
+        
         history = model.fit(
             x = samples,
             y = y_train_ohe,
@@ -322,7 +403,8 @@ class MultiDepthNeuralRandomForestClassifier:
 
         trees, self.weights = self.extract_trees_and_weights()
 
-        #self.weights = [0.2, 0.2, 0.2, 0.2, 0.2]
+        if not self.weighted:
+            self.weights = [0.2, 0.2, 0.2, 0.2, 0.2]
         
         #self.df_predictions = self.create_attribute_matrices(trees, X_train, X_val)
 
@@ -331,6 +413,12 @@ class MultiDepthNeuralRandomForestClassifier:
         
         self.trees_and_weights = list(zip(trees, weights_for_trees))
 
+        trees_and_weights_with_index = [(idx, tree_weight) for idx, tree_weight in enumerate(self.trees_and_weights)]
+
+        trees_and_weights_with_index_weighted = sorted(trees_and_weights_with_index, key=lambda x: abs(x[1][1]), reverse=True)
+
+        idx_only_weight = [(i + 1, x[0]) for i, x in enumerate(trees_and_weights_with_index_weighted)]
+
         if not self.rescheduling:
             trees_and_weights_with_index = [(idx, tree_weight) for idx, tree_weight in enumerate(self.trees_and_weights)]
             trees_and_weights_with_index.sort(key=lambda x: abs(x[1][1]), reverse=True)
@@ -338,10 +426,9 @@ class MultiDepthNeuralRandomForestClassifier:
             #print(new_indices)
             
             self.trees_and_weights.sort(key=lambda x: abs(x[1]), reverse=True)
-            print('Nessun Rescheduling')
+            #print('Nessun Rescheduling')
 
         else:
-            print(self.method)
             if self.method == 'Hierarchical':
                 self.trees_and_weights = self.hierarchical_rescheduling(self.trees_and_weights, self.df_predictions)
             elif self.method == 'ChainCorrelation':
@@ -349,11 +436,51 @@ class MultiDepthNeuralRandomForestClassifier:
             elif self.method == 'NeuralNetwork':
                 self.trees_and_weights = self.neuralnetwork_rescheduling(self.trees_and_weights, self.df_predictions_val)
             elif self.method == 'Hungarian':
-                self.trees_and_weights = self.hungarian_rescheduling(self.trees_and_weights)
+                self.trees_and_weights, idx_reordering = self.hungarian_rescheduling(self.trees_and_weights)
             elif self.method == 'Siamese':
-                self.trees_and_weights = self.siamese_rescheduling(self.trees_and_weights)
+                self.trees_and_weights, idx_reordering = self.siamese_rescheduling(self.trees_and_weights)
             else:
                 self.trees_and_weights = self.chaincorrelation_rescheduling(self.trees_and_weights, self.df_predictions_val)
+        
+        print(idx_reordering)
+        
+        if self.weighted:
+            # Combinazione lineare degli ordini
+            alpha=self.weighted_percentage
+
+            # Creiamo un dizionario con i nuovi ordinamenti per confrontare e combinare
+            weighted_order_dict = {item[1]: i for i, item in enumerate(idx_only_weight)}  # Ordine basato sui pesi
+            rescheduling_dict = {item[1]: i for i, item in enumerate(idx_reordering)}  # Ordine basato su order
+
+            # Calcoliamo un nuovo ordinamento combinato
+            combined_order = []
+
+            for idx in range(len(self.trees_and_weights)):
+                # Per ogni 'idx', prendi i due ordini e fai una combinazione lineare
+                weighted_position = weighted_order_dict[idx]
+                order_position = rescheduling_dict[idx]
+                
+                # Combinazione lineare degli indici
+                combined_position = alpha * weighted_position + (1 - alpha) * order_position
+                combined_order.append((combined_position, idx))
+
+            # Ordinamento finale in base agli indici combinati
+            combined_order.sort(key=lambda x: x[0], reverse=True)
+
+            # Ricostruisci l'ordinamento finale mantenendo solo (tree, weight)
+            reordered_trees_and_weights = [(self.trees_and_weights[i[1]][0], self.trees_and_weights[i[1]][1]) for i in combined_order]
+
+            # Risultato finale
+            self.trees_and_weights = reordered_trees_and_weights
+        
+        if self.save_trees:
+            if not os.path.exists(self.folder):
+                os.makedirs(self.folder)
+
+            for index, (tree, _) in enumerate(self.trees_and_weights):
+                filename = os.path.join(self.folder, f"DT_{index}.pkl") 
+                with open(filename, 'wb') as f:
+                    pickle.dump(tree, f)
     
     def siamese_rescheduling(self, trees_and_weights):
 
@@ -366,26 +493,41 @@ class MultiDepthNeuralRandomForestClassifier:
 
         reordered_trees_and_weights = [(trees_and_weights[i][0], trees_and_weights[i][1]) for i in order]
 
-        return reordered_trees_and_weights
+        reordered_trees_and_weights_with_index = [(trees_and_weights[i][0], trees_and_weights[i][1], i) for i in order]
+
+        idx_reordering = [(i + 1, x[2]) for i, x in enumerate(reordered_trees_and_weights_with_index)]
+
+        return reordered_trees_and_weights, idx_reordering
 
     def get_graph_embeddings(self, trees_and_weights):
         graphs = self.trees_to_graphs(trees_and_weights)
+        #print("--------------------------------------------------------------------")
+        #print(len(graphs))
+        #print("--------------------------------------------------------------------")
         if self.autoencoder:
-            in_channels = 1
-            hidden_channels = in_channels*2
-            out_channels = in_channels
+            print("AUTOENCODER")
+            in_channels = 4
+            hidden_channels = self.embedding_dim
+            out_channels = 4
             embeddings = self.get_graph_embeddings_from_autoencoder(graphs, in_channels, hidden_channels, out_channels)
+            #print(len(embeddings))
+            #print("--------------------------------------------------------------------")
+            #print(len(embeddings[0]))
+            #print("--------------------------------------------------------------------")
         else:
+            print("GRAPH2VEC")
             embeddings = self.get_graph_embeddings_from_graphs(graphs)
-
+            #print(len(embeddings[0]))
+            #print("--------------------------------------------------------------------")
         return embeddings
 
     def trees_to_graphs(self, trees_and_weights):
         graphs = []
         for tree_id, (tree, _) in enumerate(trees_and_weights):
             graph = self.decision_tree_to_graph(tree, tree_id)
-            relabeled_graph = nx.relabel_nodes(graph, {node: i for i, node in enumerate(graph.nodes())})
-            graphs.append(relabeled_graph)
+            if not self.autoencoder:
+                graph = nx.relabel_nodes(graph, {node: i for i, node in enumerate(graph.nodes())})
+            graphs.append(graph)
         return graphs
 
     def decision_tree_to_graph(self, tree, tree_id):
@@ -408,26 +550,11 @@ class MultiDepthNeuralRandomForestClassifier:
         
         if not self.autoencoder:
             return G
+
         else:
-            node_features = []
-            for node in G.nodes:
-                print(G.nodes[node])
-                if 'Threshold' in G.nodes[node]:
-                    print("Ciao, fin qui tutto ok")
-                    node_features.append([G.nodes[node]['Threshold']])
-                else:
-                    print("Ciao, fin qui niente è ok")
-                    node_features.append([G.nodes[node]['Class']])
-
-            x = torch.tensor(node_features, dtype=torch.float)
-
-            edge_index = []
-            for u, v in G.edges:
-                edge_index.append([int(u.split('_')[-1]), int(v.split('_')[-1])])  
-            edge_index = torch.tensor(edge_index, dtype=torch.long).t().contiguous()
-
-            graph_data = Data(x=x, edge_index=edge_index)
-            
+            #print("Tieni il fiato sospeso...")
+            graph_data = extract_tree_as_graph(tree)
+            #print("Forse ci siamo...")
             return graph_data
 
     def get_graph_embeddings_from_graphs(self, graphs):
@@ -441,19 +568,33 @@ class MultiDepthNeuralRandomForestClassifier:
             #embeddings.append(embedding)
         return embeddings
 
-    def get_graph_embeddings_from_autoencoder(self, graphs, in_channels, hidden_channels, out_channels):
+    def get_graph_embeddings_from_autoencoder(self, graphs, in_channels, hidden_channels, out_channels, patience=20):
         # Crea il modello
-        print("FIN QUI TUTTO OK")
+        #print("FIN QUI TUTTO OK")
         model = GraphAutoencoder(in_channels, hidden_channels, out_channels)
-        optimizer = torch.optim.Adam(model.parameters(), lr=0.01)
+
+        if self.optimizer_autoencoder == 'Adam':
+            optimizer = optim.Adam(model.parameters(), lr=self.lr_autoencoder)
+        elif self.optimizer_autoencoder == 'SGD':
+            optimizer = optim.SGD(model.parameters(), lr=self.lr_autoencoder, momentum=0.9)
+        elif self.optimizer_autoencoder == 'RMSprop':
+            optimizer = optim.RMSprop(model.parameters(), lr=self.lr_autoencoder)
+        elif self.optimizer_autoencoder == 'Adagrad':
+            optimizer = optim.Adagrad(model.parameters(), lr=self.lr_autoencoder)
+        else:
+            optimizer = optim.Adam(model.parameters(), lr=self.lr_autoencoder)
         criterion = nn.MSELoss()
 
         # Usa il DataLoader di PyTorch Geometric per gestire grafi di dimensioni diverse
-        data_loader = DataLoader(graphs, batch_size=32, shuffle=True)  # Modifica batch_size se necessario
+        data_loader = DataLoader(graphs, batch_size=self.batch_size_autoencoder, shuffle=True)
+
+        early_stopping = EarlyStopping(patience=patience, delta=0.001)
 
         # Allenamento del modello
-        train_autoencoder(model, data_loader, optimizer, criterion)
+        train_autoencoder(model, data_loader, optimizer, criterion, epochs=10000, early_stopping=early_stopping)
 
+        model.load_state_dict(torch.load(early_stopping.model_path))
+        
         # Ottenere gli embeddings dai grafi
         embeddings = get_graph_embeddings_autoencoder(model, graphs)
 
@@ -518,7 +659,7 @@ class MultiDepthNeuralRandomForestClassifier:
         # Genera una coppia simile e una coppia diversa per ogni embedding
         for i in range(len(graph_embeddings)):
             # Coppia simile: ogni embedding viene accoppiato con se stesso con rumore gaussiano
-            noisy_embedding = graph_embeddings[i] + np.random.normal(0, noise_std, graph_embeddings[i].shape)
+            noisy_embedding = graph_embeddings[i] + np.random.normal(0, noise_std, np.array(graph_embeddings[i]).shape)
             pairs.append([graph_embeddings[i], noisy_embedding])
             labels_out.append(1)  # Etichetta 1 per coppie simili con rumore
         
@@ -543,7 +684,7 @@ class MultiDepthNeuralRandomForestClassifier:
         )
 
         early_stopping_batch = EarlyStoppingByBatch(patience=200, verbose=1)
-        print("start of the Siamese model's train")
+        #print("start of the Siamese model's train")
         # Allenare il modello
         siamese_model.fit(
             #[np.squeeze(pairs_train[:,0], axis=1), np.squeeze(pairs_train[:,1], axis=1)],
@@ -556,7 +697,7 @@ class MultiDepthNeuralRandomForestClassifier:
         ).history
 
         #similarities = []
-        print("end of the Siamese model's train")
+        #print("end of the Siamese model's train")
         pairs = self.generate_all_pairs(graph_embeddings)
         
         #for pair in pairs:
@@ -567,14 +708,14 @@ class MultiDepthNeuralRandomForestClassifier:
         embeddings_2 = np.array([pair[1] for pair in pairs])
 
         #progress_callback = ProgressBarCallback(total_batches=len(pairs) // 128)  # Assumiamo batch_size=32
-        print("start of the Siamese model's inference")
+        #print("start of the Siamese model's inference")
         # Esegui la previsione con il progresso
         similarities = siamese_model.predict(
             [embeddings_1, embeddings_2],
             batch_size=128
             #callbacks=[progress_callback]
         )
-        print("end of the Siamese model's inference")
+        #print("end of the Siamese model's inference")
 
         n_samples = len(graph_embeddings)
         similarity_matrix = np.zeros((n_samples, n_samples))
@@ -611,7 +752,12 @@ class MultiDepthNeuralRandomForestClassifier:
 
         # Ritorna gli alberi riordinati con i loro pesi originali
         reordered_trees_and_weights = [(trees_and_weights[i][0], trees_and_weights[i][1]) for i in order]
-        return reordered_trees_and_weights
+
+        reordered_trees_and_weights_with_index = [(trees_and_weights[i][0], trees_and_weights[i][1], i) for i in order]
+
+        idx_reordering = [(i + 1, x[2]) for i, x in enumerate(reordered_trees_and_weights_with_index)]
+
+        return reordered_trees_and_weights, idx_reordering
 
     def aggregate_regions_by_label(self, tree):
 
