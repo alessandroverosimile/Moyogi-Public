@@ -18,14 +18,14 @@ import spatial_templates.me._
 
 class EarlyTerminatorPETester extends AnyFreeSpec with ChiselScalatestTester {
 
-  val n_attr = 4
-  val n_classes = 5
+  val n_attr = 5
+  val n_classes = 6
   val n_depths = 5
   val info_bit = 10
   val tree_bit = 8
 
   "Pe should check whether the score of the sample is already decided" in {
-    test(new EarlyTerminatorPE(new ElemId(2,0,0,0),n_attr,n_classes,n_depths,info_bit,tree_bit,95.toDouble,2)) { c =>
+    test(new EarlyTerminatorPE(new ElemId(2,0,0,0),n_attr,n_classes,n_depths,info_bit,tree_bit,180.0,2)) { c =>
         
         for (k <- 0 until 3){
             for (i <- 0 until 2){
@@ -70,7 +70,7 @@ class EarlyTerminatorPETester extends AnyFreeSpec with ChiselScalatestTester {
         */
         println("Emitting verilog")
         val VerilogEmitter = (new chisel3.stage.ChiselStage).emitVerilog(
-            new EarlyTerminatorPE(new ElemId(2,0,0,0),n_attr,n_classes,n_depths,info_bit,tree_bit,95.toDouble,2)
+            new EarlyTerminatorPE(new ElemId(2,0,0,0),n_attr,n_classes,n_depths,info_bit,tree_bit,180.0,2)
         )
         Files.write(
             Paths.get("./EarlyTerminatorWithSort.v"),

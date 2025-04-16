@@ -29,6 +29,8 @@ chisel_project/*.fir
 
 ### XilinxISE template
 # intermediate build files
+*.jou
+*.str
 *.bgn
 *.bit
 *.bld

@@ -5,6 +5,14 @@ import chiseltest._
 import org.scalatest.freespec.AnyFreeSpec
 import chisel3.experimental.BundleLiterals._
 import scala.math._
+import java.io.PrintWriter
+import java.io.File
+import java.nio.file.Files
+import java.nio.file.Paths
+import dataclass.data
+import java.nio.charset.StandardCharsets
+import scala.io.Source
+import chisel3.experimental.FixedPoint
 import spatial_templates.pe._
 import spatial_templates.me._
 
@@ -85,6 +93,17 @@ class VoterPETester extends AnyFreeSpec with ChiselScalatestTester {
         println("VALID: ")
         println(c.io.sample_out.valid.peek().litValue)
         */
+
+        println("Emitting verilog")
+        val VerilogEmitter = (new chisel3.stage.ChiselStage).emitVerilog(
+            new VoterPE(new ElemId(2,0,0,0),n_attr,n_classes,n_depths,info_bit,tree_bit,2)
+        )
+        Files.write(
+            Paths.get("./VoterPE.v"),
+            VerilogEmitter.getBytes(StandardCharsets.UTF_8)
+        )
+        
+        println("Verilog emitted")
     }
   }
 }
