@@ -21,7 +21,7 @@ for i in n_trees_values:
     for j in max_depth_values:
         couples.append((i,j))
 
-for i,couple in enumerate(couples):
+for i,couple in enumerate(couples[:1]):
 
     total, used, free = shutil.disk_usage("/")
     print(total/10**9, used/10**9, free/10**9)

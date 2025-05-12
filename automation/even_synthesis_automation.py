@@ -21,7 +21,7 @@ frqs = [166] #[166, 187, 214]
 #        couples.append((i,j))
 
 couples = [(1080,5),(180,7),(90,3)]
-early_termination = 1 #set to 0 to skip early termination
+early_termination = 1 #set to 0 to skip early termination, 1 to enable it
 
 for i,couple in enumerate(couples):
     

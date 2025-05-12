@@ -8,7 +8,7 @@ add_files -norecurse ./block_diagram/block_diagram.gen/sources_1/bd/design_2/hdl
 add_files -norecurse {../chisel_project/BRAMBlackBox.v ../chisel_project/TreePEsWrapper.v}
 add_files -norecurse {./vivado_components/not.v}
 
-create_bd_cell -type ip -vlnv xilinx.com:ip:zynq_ultra_ps_e:3.3 zynq_ultra_ps_e_0
+create_bd_cell -type ip -vlnv xilinx.com:ip:zynq_ultra_ps_e:3.{{ps_version}} zynq_ultra_ps_e_0
 apply_bd_automation -rule xilinx.com:bd_rule:zynq_ultra_ps_e -config {apply_board_preset "1" }  [get_bd_cells zynq_ultra_ps_e_0]
 
 set clkdiv [expr { int(1500/{{trgt_freq}}) }]
