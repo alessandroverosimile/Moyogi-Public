@@ -12,6 +12,8 @@ sys.path.append("../")
 from software_host.MultiDepthRandomForest import MultiDepthNeuralRandomForestClassifier
 from software_host.Dataset import import_accelerometer
 
+VIVADO_VERSION = 2023.1
+
 def get_best_architecture(min_width, max_depth, n_trees, necessary_set_of_pes, max_LUTs, max_FFs, max_BRAMs, LUTs_tolerance = 700, FFs_tolerance = 4000, BRAMs_tolerance = 16, wns_tolerance = 50):
     with open('resource_estimation_models/LUTs_model.pkl', 'rb') as f:
         LUTs_model = pickle.load(f)
@@ -220,8 +222,13 @@ def main():
 
     print("Total PEs ", set_of_pes*max_depth)
 
+    if VIVADO_VERSION==2021.2:
+        ps_version = 3
+    else:
+        ps_version = 5
+
     template = env.get_template('vivadoScript.tcl.jinja')
-    template.stream(n_pes=set_of_pes*max_depth, dma_bits=dma_bits, trgt_freq=frq, width=int(width/8), dma_bytes=int(dma_bits/8)).dump('vivadoScript.tcl')
+    template.stream(n_pes=np.sum(best_combination), dma_bits=dma_bits, trgt_freq=frq, width=int(width/8), dma_bytes=int(dma_bits/8),ps_version=ps_version).dump('vivadoScript.tcl')
 
     cmd = f"source /xilinx/software/Vivado/2021.2/settings64.sh && vivado -nojournal -nolog -mode batch -source vivadoScript.tcl"
     success = os.system(cmd)
