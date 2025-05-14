@@ -37,7 +37,7 @@ for i,couple in enumerate(couples):
     	print("Exection with " + str(max_depth) + " depth, " + str(n_trees) + " estimators and " + str(frqs[0]) + "MHz frequency skipped")
     	continue
     
-    n_classes = 6
+    n_classes = 7
     n_attr = 5
 
     cmd = f"python3 generate_best_equal_paths_architecture.py {n_trees} {max_depth} {min_depth} {n_attr} {n_classes} {early_termination} {frqs[0]} "

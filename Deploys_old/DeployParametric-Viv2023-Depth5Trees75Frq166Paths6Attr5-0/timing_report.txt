@@ -1,0 +1,104 @@
+Copyright 1986-2022 Xilinx, Inc. All Rights Reserved. Copyright 2022-2023 Advanced Micro Devices, Inc. All Rights Reserved.
+--------------------------------------------------------------------------------------------------------------------------------------------------
+| Tool Version      : Vivado v.2023.1 (lin64) Build 3865809 Sun May  7 15:04:56 MDT 2023
+| Date              : Wed May  7 18:00:32 2025
+| Host              : NAGS30 running 64-bit CentOS Linux release 7.9.2009 (Core)
+| Command           : report_timing -file ./block_diagram/block_diagram.gen/timing_report.txt
+| Design            : design_2_wrapper
+| Device            : xczu3eg-sbva484
+| Speed File        : -1  PRODUCTION 1.30 05-15-2022
+| Design State      : Routed
+| Temperature Grade : I
+--------------------------------------------------------------------------------------------------------------------------------------------------
+
+Timing Report
+
+Slack (MET) :             0.135ns  (required time - arrival time)
+  Source:                 design_2_i/ps8_0_axi_periph/m22_couplers/auto_ds/inst/gen_downsizer.gen_simple_downsizer.axi_downsizer_inst/USE_WRITE.write_addr_inst/cmd_queue/inst/fifo_gen_inst/inst_fifo_gen/gconvfifo.rf/grf.rf/gntv_or_sync_fifo.mem/goreg_dm.dout_i_reg[4]/C
+                            (rising edge-triggered cell FDRE clocked by clk_pl_0  {rise@0.000ns fall@3.000ns period=6.000ns})
+  Destination:            design_2_i/zynq_ultra_ps_e_0/inst/PS8_i/MAXIGP0WREADY
+                            (rising edge-triggered cell PS8 clocked by clk_pl_0  {rise@0.000ns fall@3.000ns period=6.000ns})
+  Path Group:             clk_pl_0
+  Path Type:              Setup (Max at Slow Process Corner)
+  Requirement:            6.000ns  (clk_pl_0 rise@6.000ns - clk_pl_0 rise@0.000ns)
+  Data Path Delay:        4.679ns  (logic 1.004ns (21.458%)  route 3.675ns (78.542%))
+  Logic Levels:           10  (LUT2=2 LUT5=1 LUT6=7)
+  Clock Path Skew:        -0.230ns (DCD - SCD + CPR)
+    Destination Clock Delay (DCD):    1.679ns = ( 7.679 - 6.000 ) 
+    Source Clock Delay      (SCD):    2.011ns
+    Clock Pessimism Removal (CPR):    0.102ns
+  Clock Uncertainty:      0.147ns  ((TSJ^2 + DJ^2)^1/2) / 2 + PE
+    Total System Jitter     (TSJ):    0.071ns
+    Discrete Jitter          (DJ):    0.285ns
+    Phase Error              (PE):    0.000ns
+  Clock Net Delay (Source):      1.804ns (routing 0.638ns, distribution 1.166ns)
+  Clock Net Delay (Destination): 1.512ns (routing 0.576ns, distribution 0.936ns)
+
+    Location             Delay type                Incr(ns)  Path(ns)    Netlist Resource(s)
+  -------------------------------------------------------------------    -------------------
+                         (clock clk_pl_0 rise edge)
+                                                      0.000     0.000 r  
+    PS8_X0Y0             PS8                          0.000     0.000 r  design_2_i/zynq_ultra_ps_e_0/inst/PS8_i/PLCLK[0]
+                         net (fo=1, routed)           0.178     0.178    design_2_i/zynq_ultra_ps_e_0/inst/pl_clk_unbuffered[0]
+    BUFG_PS_X0Y58        BUFG_PS (Prop_BUFG_PS_I_O)
+                                                      0.029     0.207 r  design_2_i/zynq_ultra_ps_e_0/inst/buffer_pl_clk_0.PL_CLK_0_BUFG/O
+    X0Y1 (CLOCK_ROOT)    net (fo=87007, routed)       1.804     2.011    design_2_i/ps8_0_axi_periph/m22_couplers/auto_ds/inst/gen_downsizer.gen_simple_downsizer.axi_downsizer_inst/USE_WRITE.write_addr_inst/cmd_queue/inst/fifo_gen_inst/inst_fifo_gen/gconvfifo.rf/grf.rf/gntv_or_sync_fifo.mem/clk
+    SLICE_X6Y171         FDRE                                         r  design_2_i/ps8_0_axi_periph/m22_couplers/auto_ds/inst/gen_downsizer.gen_simple_downsizer.axi_downsizer_inst/USE_WRITE.write_addr_inst/cmd_queue/inst/fifo_gen_inst/inst_fifo_gen/gconvfifo.rf/grf.rf/gntv_or_sync_fifo.mem/goreg_dm.dout_i_reg[4]/C
+  -------------------------------------------------------------------    -------------------
+    SLICE_X6Y171         FDRE (Prop_BFF2_SLICEL_C_Q)
+                                                      0.098     2.109 f  design_2_i/ps8_0_axi_periph/m22_couplers/auto_ds/inst/gen_downsizer.gen_simple_downsizer.axi_downsizer_inst/USE_WRITE.write_addr_inst/cmd_queue/inst/fifo_gen_inst/inst_fifo_gen/gconvfifo.rf/grf.rf/gntv_or_sync_fifo.mem/goreg_dm.dout_i_reg[4]/Q
+                         net (fo=4, routed)           0.604     2.713    design_2_i/ps8_0_axi_periph/m22_couplers/auto_ds/inst/gen_downsizer.gen_simple_downsizer.axi_downsizer_inst/USE_WRITE.write_data_inst/current_word_1_reg[1]_1[1]
+    SLICE_X6Y171         LUT5 (Prop_C5LUT_SLICEL_I1_O)
+                                                      0.195     2.908 r  design_2_i/ps8_0_axi_periph/m22_couplers/auto_ds/inst/gen_downsizer.gen_simple_downsizer.axi_downsizer_inst/USE_WRITE.write_data_inst/length_counter_1[3]_i_2/O
+                         net (fo=2, routed)           0.205     3.113    design_2_i/ps8_0_axi_periph/m22_couplers/auto_ds/inst/gen_downsizer.gen_simple_downsizer.axi_downsizer_inst/USE_WRITE.write_data_inst/length_counter_1[3]_i_2_n_0
+    SLICE_X6Y170         LUT6 (Prop_A6LUT_SLICEL_I2_O)
+                                                      0.115     3.228 r  design_2_i/ps8_0_axi_periph/m22_couplers/auto_ds/inst/gen_downsizer.gen_simple_downsizer.axi_downsizer_inst/USE_WRITE.write_data_inst/m_axi_wlast_INST_0_i_2/O
+                         net (fo=2, routed)           0.119     3.347    design_2_i/ps8_0_axi_periph/m22_couplers/auto_ds/inst/gen_downsizer.gen_simple_downsizer.axi_downsizer_inst/USE_WRITE.write_data_inst/m_axi_wlast_INST_0_i_2_n_0
+    SLICE_X7Y170         LUT6 (Prop_D6LUT_SLICEL_I2_O)
+                                                      0.116     3.463 r  design_2_i/ps8_0_axi_periph/m22_couplers/auto_ds/inst/gen_downsizer.gen_simple_downsizer.axi_downsizer_inst/USE_WRITE.write_data_inst/m_axi_wlast_INST_0_i_1/O
+                         net (fo=2, routed)           0.179     3.643    design_2_i/ps8_0_axi_periph/m22_couplers/auto_ds/inst/gen_downsizer.gen_simple_downsizer.axi_downsizer_inst/USE_WRITE.write_data_inst/m_axi_wlast_INST_0_i_1_n_0
+    SLICE_X7Y169         LUT6 (Prop_A6LUT_SLICEL_I2_O)
+                                                      0.039     3.682 r  design_2_i/ps8_0_axi_periph/m22_couplers/auto_ds/inst/gen_downsizer.gen_simple_downsizer.axi_downsizer_inst/USE_WRITE.write_data_inst/m_axi_wlast_INST_0/O
+                         net (fo=10, routed)          0.115     3.797    design_2_i/ps8_0_axi_periph/m22_couplers/auto_ds/inst/gen_downsizer.gen_simple_downsizer.axi_downsizer_inst/USE_WRITE.write_addr_inst/cmd_queue/inst/s_axi_wready_0
+    SLICE_X8Y169         LUT6 (Prop_E6LUT_SLICEL_I2_O)
+                                                      0.148     3.945 r  design_2_i/ps8_0_axi_periph/m22_couplers/auto_ds/inst/gen_downsizer.gen_simple_downsizer.axi_downsizer_inst/USE_WRITE.write_addr_inst/cmd_queue/inst/s_axi_wready_INST_0/O
+                         net (fo=1, routed)           0.736     4.681    design_2_i/ps8_0_axi_periph/tier2_xbar_2/inst/gen_samd.crossbar_samd/gen_slave_slots[0].gen_si_write.wdata_router_w/wrouter_aw_fifo/gen_srls[0].gen_rep[3].srl_nx1/m_axi_wready[6]
+    SLICE_X8Y108         LUT6 (Prop_G6LUT_SLICEL_I4_O)
+                                                      0.063     4.744 r  design_2_i/ps8_0_axi_periph/tier2_xbar_2/inst/gen_samd.crossbar_samd/gen_slave_slots[0].gen_si_write.wdata_router_w/wrouter_aw_fifo/gen_srls[0].gen_rep[3].srl_nx1/s_axi_wready[0]_INST_0_i_6/O
+                         net (fo=1, routed)           0.174     4.918    design_2_i/ps8_0_axi_periph/tier2_xbar_2/inst/gen_samd.crossbar_samd/gen_slave_slots[0].gen_si_write.wdata_router_w/wrouter_aw_fifo/gen_srls[0].gen_rep[3].srl_nx1/s_axi_wready[0]_INST_0_i_6_n_0
+    SLICE_X9Y108         LUT6 (Prop_B6LUT_SLICEM_I5_O)
+                                                      0.063     4.981 r  design_2_i/ps8_0_axi_periph/tier2_xbar_2/inst/gen_samd.crossbar_samd/gen_slave_slots[0].gen_si_write.wdata_router_w/wrouter_aw_fifo/gen_srls[0].gen_rep[3].srl_nx1/s_axi_wready[0]_INST_0_i_1/O
+                         net (fo=2, routed)           0.345     5.326    design_2_i/ps8_0_axi_periph/tier2_xbar_2/inst/gen_samd.crossbar_samd/gen_slave_slots[0].gen_si_write.wdata_router_w/wrouter_aw_fifo/m_aready0
+    SLICE_X11Y90         LUT2 (Prop_B6LUT_SLICEL_I1_O)
+                                                      0.040     5.366 r  design_2_i/ps8_0_axi_periph/tier2_xbar_2/inst/gen_samd.crossbar_samd/gen_slave_slots[0].gen_si_write.wdata_router_w/wrouter_aw_fifo/s_axi_wready[0]_INST_0/O
+                         net (fo=1, routed)           0.406     5.772    design_2_i/ps8_0_axi_periph/xbar/inst/gen_samd.crossbar_samd/gen_slave_slots[0].gen_si_write.wdata_router_w/wrouter_aw_fifo/gen_srls[0].gen_rep[1].srl_nx1/m_axi_wready[2]
+    SLICE_X11Y64         LUT6 (Prop_C6LUT_SLICEL_I5_O)
+                                                      0.063     5.835 r  design_2_i/ps8_0_axi_periph/xbar/inst/gen_samd.crossbar_samd/gen_slave_slots[0].gen_si_write.wdata_router_w/wrouter_aw_fifo/gen_srls[0].gen_rep[1].srl_nx1/s_axi_wready[0]_INST_0_i_1/O
+                         net (fo=2, routed)           0.290     6.125    design_2_i/ps8_0_axi_periph/xbar/inst/gen_samd.crossbar_samd/gen_slave_slots[0].gen_si_write.wdata_router_w/wrouter_aw_fifo/m_aready0
+    SLICE_X7Y50          LUT2 (Prop_A6LUT_SLICEL_I1_O)
+                                                      0.064     6.189 r  design_2_i/ps8_0_axi_periph/xbar/inst/gen_samd.crossbar_samd/gen_slave_slots[0].gen_si_write.wdata_router_w/wrouter_aw_fifo/s_axi_wready[0]_INST_0/O
+                         net (fo=1, routed)           0.501     6.690    design_2_i/zynq_ultra_ps_e_0/inst/maxigp0_wready
+    PS8_X0Y0             PS8                                          r  design_2_i/zynq_ultra_ps_e_0/inst/PS8_i/MAXIGP0WREADY
+  -------------------------------------------------------------------    -------------------
+
+                         (clock clk_pl_0 rise edge)
+                                                      6.000     6.000 r  
+    PS8_X0Y0             PS8                          0.000     6.000 r  design_2_i/zynq_ultra_ps_e_0/inst/PS8_i/PLCLK[0]
+                         net (fo=1, routed)           0.140     6.140    design_2_i/zynq_ultra_ps_e_0/inst/pl_clk_unbuffered[0]
+    BUFG_PS_X0Y58        BUFG_PS (Prop_BUFG_PS_I_O)
+                                                      0.027     6.167 r  design_2_i/zynq_ultra_ps_e_0/inst/buffer_pl_clk_0.PL_CLK_0_BUFG/O
+    X0Y1 (CLOCK_ROOT)    net (fo=87007, routed)       1.512     7.679    design_2_i/zynq_ultra_ps_e_0/inst/maxihpm0_fpd_aclk
+    PS8_X0Y0             PS8                                          r  design_2_i/zynq_ultra_ps_e_0/inst/PS8_i/MAXIGP0ACLK
+                         clock pessimism              0.102     7.781    
+                         clock uncertainty           -0.147     7.634    
+    PS8_X0Y0             PS8 (Setup_PS8_MAXIGP0ACLK_MAXIGP0WREADY)
+                                                     -0.809     6.825    design_2_i/zynq_ultra_ps_e_0/inst/PS8_i
+  -------------------------------------------------------------------
+                         required time                          6.825    
+                         arrival time                          -6.690    
+  -------------------------------------------------------------------
+                         slack                                  0.135    
+
+
+
+

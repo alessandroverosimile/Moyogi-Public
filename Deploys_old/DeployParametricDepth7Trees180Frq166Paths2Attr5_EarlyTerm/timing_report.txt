@@ -1,0 +1,154 @@
+Copyright 1986-2021 Xilinx, Inc. All Rights Reserved.
+----------------------------------------------------------------------------------------------
+| Tool Version      : Vivado v.2021.2.1 (lin64) Build 3414424 Sun Dec 19 10:57:14 MST 2021
+| Date              : Thu Mar 27 17:53:42 2025
+| Host              : NAGS30 running 64-bit CentOS Linux release 7.9.2009 (Core)
+| Command           : report_timing -file ./block_diagram/block_diagram.gen/timing_report.txt
+| Design            : design_2_wrapper
+| Device            : xczu3eg-sbva484
+| Speed File        : -1  PRODUCTION 1.29 08-03-2020
+| Temperature Grade : I
+----------------------------------------------------------------------------------------------
+
+Timing Report
+
+Slack (VIOLATED) :        -4.815ns  (required time - arrival time)
+  Source:                 design_2_i/TreePEsWrapper_0/inst/early_terminator/queues_q/deq_ptr_value_reg_replica/C
+                            (rising edge-triggered cell FDRE clocked by clk_pl_0  {rise@0.000ns fall@3.000ns period=6.000ns})
+  Destination:            design_2_i/TreePEsWrapper_0/inst/increment_1/queue/ram_features_3_reg_0_1_14_27/RAMA/WE
+                            (rising edge-triggered cell RAMD32 clocked by clk_pl_0  {rise@0.000ns fall@3.000ns period=6.000ns})
+  Path Group:             clk_pl_0
+  Path Type:              Setup (Max at Slow Process Corner)
+  Requirement:            6.000ns  (clk_pl_0 rise@6.000ns - clk_pl_0 rise@0.000ns)
+  Data Path Delay:        10.356ns  (logic 3.694ns (35.670%)  route 6.662ns (64.330%))
+  Logic Levels:           27  (CARRY8=10 LUT2=1 LUT3=3 LUT4=1 LUT5=2 LUT6=9 RAMD32=1)
+  Clock Path Skew:        -0.120ns (DCD - SCD + CPR)
+    Destination Clock Delay (DCD):    1.776ns = ( 7.776 - 6.000 ) 
+    Source Clock Delay      (SCD):    2.003ns
+    Clock Pessimism Removal (CPR):    0.107ns
+  Clock Uncertainty:      0.147ns  ((TSJ^2 + DJ^2)^1/2) / 2 + PE
+    Total System Jitter     (TSJ):    0.071ns
+    Discrete Jitter          (DJ):    0.285ns
+    Phase Error              (PE):    0.000ns
+  Clock Net Delay (Source):      1.796ns (routing 0.638ns, distribution 1.158ns)
+  Clock Net Delay (Destination): 1.609ns (routing 0.576ns, distribution 1.033ns)
+
+    Location             Delay type                Incr(ns)  Path(ns)    Netlist Resource(s)
+  -------------------------------------------------------------------    -------------------
+                         (clock clk_pl_0 rise edge)
+                                                      0.000     0.000 r  
+    PS8_X0Y0             PS8                          0.000     0.000 r  design_2_i/zynq_ultra_ps_e_0/inst/PS8_i/PLCLK[0]
+                         net (fo=1, routed)           0.178     0.178    design_2_i/zynq_ultra_ps_e_0/inst/pl_clk_unbuffered[0]
+    BUFG_PS_X0Y58        BUFG_PS (Prop_BUFG_PS_I_O)
+                                                      0.029     0.207 r  design_2_i/zynq_ultra_ps_e_0/inst/buffer_pl_clk_0.PL_CLK_0_BUFG/O
+    X0Y1 (CLOCK_ROOT)    net (fo=87585, routed)       1.796     2.003    design_2_i/TreePEsWrapper_0/inst/early_terminator/queues_q/clock
+    SLICE_X20Y56         FDRE                                         r  design_2_i/TreePEsWrapper_0/inst/early_terminator/queues_q/deq_ptr_value_reg_replica/C
+  -------------------------------------------------------------------    -------------------
+    SLICE_X20Y56         FDRE (Prop_AFF2_SLICEM_C_Q)
+                                                      0.097     2.100 r  design_2_i/TreePEsWrapper_0/inst/early_terminator/queues_q/deq_ptr_value_reg_replica/Q
+                         net (fo=70, routed)          0.668     2.768    design_2_i/TreePEsWrapper_0/inst/early_terminator/queues_q/ram_scores_1_reg_0_1_0_13/ADDRE0
+    SLICE_X19Y54         RAMD32 (Prop_E5LUT_SLICEM_RADR0_O)
+                                                      0.201     2.969 r  design_2_i/TreePEsWrapper_0/inst/early_terminator/queues_q/ram_scores_1_reg_0_1_0_13/RAME/O
+                         net (fo=3, routed)           0.219     3.188    design_2_i/TreePEsWrapper_0/inst/early_terminator/queues_q/clock_1[8]
+    SLICE_X19Y57         LUT2 (Prop_A6LUT_SLICEM_I0_O)
+                                                      0.040     3.228 r  design_2_i/TreePEsWrapper_0/inst/early_terminator/queues_q/ram_scores_1_reg_0_63_7_13_i_9/O
+                         net (fo=1, routed)           0.014     3.242    design_2_i/TreePEsWrapper_0/inst/early_terminator/queues_q/ram_scores_1_reg_0_63_7_13_i_9_n_0
+    SLICE_X19Y57         CARRY8 (Prop_CARRY8_SLICEM_S[0]_O[5])
+                                                      0.298     3.540 r  design_2_i/TreePEsWrapper_0/inst/early_terminator/queues_q/ram_scores_1_reg_0_63_7_13_i_1/O[5]
+                         net (fo=12, routed)          0.423     3.963    design_2_i/TreePEsWrapper_0/backward_converter_io_sample_in_bits_scores_1[13]
+    SLICE_X22Y52         LUT4 (Prop_G6LUT_SLICEL_I0_O)
+                                                      0.147     4.110 r  design_2_i/TreePEsWrapper_0/ram_search_for_root_reg_0_127_0_0_i_342/O
+                         net (fo=1, routed)           0.009     4.119    design_2_i/TreePEsWrapper_0/ram_search_for_root_reg_0_127_0_0_i_342_n_0
+    SLICE_X22Y52         CARRY8 (Prop_CARRY8_SLICEL_S[6]_CO[7])
+                                                      0.155     4.274 r  design_2_i/TreePEsWrapper_0/ram_search_for_root_reg_0_127_0_0_i_163/CO[7]
+                         net (fo=93, routed)          0.369     4.643    design_2_i/TreePEsWrapper_0/early_terminator/_next_0_T
+    SLICE_X22Y57         LUT3 (Prop_E6LUT_SLICEL_I1_O)
+                                                      0.116     4.759 f  design_2_i/TreePEsWrapper_0/ram_search_for_root_reg_0_127_0_0_i_389/O
+                         net (fo=2, routed)           0.178     4.937    design_2_i/TreePEsWrapper_0/ram_search_for_root_reg_0_127_0_0_i_389_n_0
+    SLICE_X22Y54         LUT6 (Prop_D6LUT_SLICEL_I1_O)
+                                                      0.174     5.111 r  design_2_i/TreePEsWrapper_0/ram_search_for_root_reg_0_127_0_0_i_349/O
+                         net (fo=1, routed)           0.233     5.344    design_2_i/TreePEsWrapper_0/ram_search_for_root_reg_0_127_0_0_i_349_n_0
+    SLICE_X23Y54         CARRY8 (Prop_CARRY8_SLICEL_DI[7]_CO[7])
+                                                      0.075     5.419 r  design_2_i/TreePEsWrapper_0/ram_search_for_root_reg_0_127_0_0_i_164/CO[7]
+                         net (fo=89, routed)          0.211     5.630    design_2_i/TreePEsWrapper_0/early_terminator/_next_0_T_2
+    SLICE_X23Y55         LUT5 (Prop_C6LUT_SLICEL_I3_O)
+                                                      0.174     5.804 r  design_2_i/TreePEsWrapper_0/ram_search_for_root_reg_0_127_0_0_i_133/O
+                         net (fo=3, routed)           0.300     6.104    design_2_i/TreePEsWrapper_0/ram_search_for_root_reg_0_127_0_0_i_133_n_0
+    SLICE_X23Y58         LUT5 (Prop_G6LUT_SLICEL_I4_O)
+                                                      0.038     6.142 f  design_2_i/TreePEsWrapper_0/ram_search_for_root_reg_0_127_0_0_i_386/O
+                         net (fo=1, routed)           0.151     6.293    design_2_i/TreePEsWrapper_0/ram_search_for_root_reg_0_127_0_0_i_386_n_0
+    SLICE_X22Y59         LUT6 (Prop_C6LUT_SLICEL_I0_O)
+                                                      0.063     6.356 r  design_2_i/TreePEsWrapper_0/ram_search_for_root_reg_0_127_0_0_i_179/O
+                         net (fo=1, routed)           0.011     6.367    design_2_i/TreePEsWrapper_0/ram_search_for_root_reg_0_127_0_0_i_179_n_0
+    SLICE_X22Y59         CARRY8 (Prop_CARRY8_SLICEL_S[2]_CO[7])
+                                                      0.203     6.570 r  design_2_i/TreePEsWrapper_0/ram_search_for_root_reg_0_127_0_0_i_65/CO[7]
+                         net (fo=175, routed)         0.218     6.788    design_2_i/TreePEsWrapper_0/early_terminator/_next_0_T_4
+    SLICE_X22Y60         LUT3 (Prop_C6LUT_SLICEL_I1_O)
+                                                      0.098     6.886 r  design_2_i/TreePEsWrapper_0/ram_search_for_root_reg_0_127_0_0_i_407/O
+                         net (fo=16, routed)          0.176     7.062    design_2_i/TreePEsWrapper_0/ram_search_for_root_reg_0_127_0_0_i_407_n_0
+    SLICE_X23Y61         LUT6 (Prop_C6LUT_SLICEL_I0_O)
+                                                      0.098     7.160 f  design_2_i/TreePEsWrapper_0/ram_search_for_root_reg_0_127_0_0_i_325/O
+                         net (fo=2, routed)           0.286     7.446    design_2_i/TreePEsWrapper_0/ram_search_for_root_reg_0_127_0_0_i_325_n_0
+    SLICE_X22Y63         LUT3 (Prop_E6LUT_SLICEL_I2_O)
+                                                      0.148     7.594 r  design_2_i/TreePEsWrapper_0/ram_search_for_root_reg_0_127_0_0_i_552/O
+                         net (fo=2, routed)           0.159     7.753    design_2_i/TreePEsWrapper_0/ram_search_for_root_reg_0_127_0_0_i_552_n_0
+    SLICE_X21Y63         LUT6 (Prop_B6LUT_SLICEL_I5_O)
+                                                      0.115     7.868 r  design_2_i/TreePEsWrapper_0/ram_search_for_root_reg_0_127_0_0_i_422/O
+                         net (fo=1, routed)           0.010     7.878    design_2_i/TreePEsWrapper_0/ram_search_for_root_reg_0_127_0_0_i_422_n_0
+    SLICE_X21Y63         CARRY8 (Prop_CARRY8_SLICEL_S[1]_CO[7])
+                                                      0.240     8.118 r  design_2_i/TreePEsWrapper_0/ram_search_for_root_reg_0_127_0_0_i_243/CO[7]
+                         net (fo=17, routed)          0.440     8.558    design_2_i/TreePEsWrapper_0/early_terminator/max2_next__01
+    SLICE_X17Y65         LUT6 (Prop_A6LUT_SLICEL_I2_O)
+                                                      0.100     8.658 f  design_2_i/TreePEsWrapper_0/ram_search_for_root_reg_0_127_0_0_i_162/O
+                         net (fo=3, routed)           0.331     8.989    design_2_i/TreePEsWrapper_0/ram_search_for_root_reg_0_127_0_0_i_162_n_0
+    SLICE_X17Y62         LUT6 (Prop_H6LUT_SLICEL_I5_O)
+                                                      0.149     9.138 r  design_2_i/TreePEsWrapper_0/ram_search_for_root_reg_0_127_0_0_i_232/O
+                         net (fo=1, routed)           0.154     9.292    design_2_i/TreePEsWrapper_0/ram_search_for_root_reg_0_127_0_0_i_232_n_0
+    SLICE_X17Y61         CARRY8 (Prop_CARRY8_SLICEL_DI[0]_CO[7])
+                                                      0.174     9.466 r  design_2_i/TreePEsWrapper_0/ram_search_for_root_reg_0_127_0_0_i_75/CO[7]
+                         net (fo=16, routed)          0.390     9.856    design_2_i/TreePEsWrapper_0/early_terminator/max2_next_1_01
+    SLICE_X18Y57         LUT6 (Prop_F6LUT_SLICEL_I4_O)
+                                                      0.114     9.970 r  design_2_i/TreePEsWrapper_0/ram_search_for_root_reg_0_127_0_0_i_58/O
+                         net (fo=1, routed)           0.012     9.982    design_2_i/TreePEsWrapper_0/ram_search_for_root_reg_0_127_0_0_i_58_n_0
+    SLICE_X18Y57         CARRY8 (Prop_CARRY8_SLICEL_S[5]_CO[7])
+                                                      0.197    10.179 r  design_2_i/TreePEsWrapper_0/ram_search_for_root_reg_0_127_0_0_i_24/CO[7]
+                         net (fo=1, routed)           0.028    10.207    design_2_i/TreePEsWrapper_0/ram_search_for_root_reg_0_127_0_0_i_24_n_0
+    SLICE_X18Y58         CARRY8 (Prop_CARRY8_SLICEL_CI_O[7])
+                                                      0.146    10.353 f  design_2_i/TreePEsWrapper_0/ram_search_for_root_reg_0_127_0_0_i_5/O[7]
+                         net (fo=5, routed)           0.402    10.755    design_2_i/TreePEsWrapper_0/inst/backward_converter/queue/_GEN_30[15]
+    SLICE_X17Y55         LUT6 (Prop_G6LUT_SLICEL_I0_O)
+                                                      0.147    10.902 f  design_2_i/TreePEsWrapper_0/inst/backward_converter/queue/ram_search_for_root_reg_0_127_0_0_i_8/O
+                         net (fo=1, routed)           0.129    11.031    design_2_i/TreePEsWrapper_0/inst/backward_converter/queue/ram_search_for_root_reg_0_127_0_0_i_8_n_0
+    SLICE_X17Y53         CARRY8 (Prop_CARRY8_SLICEL_DI[7]_CO[7])
+                                                      0.068    11.099 f  design_2_i/TreePEsWrapper_0/inst/backward_converter/queue/ram_search_for_root_reg_0_127_0_0_i_4/CO[7]
+                         net (fo=1, routed)           0.028    11.127    design_2_i/TreePEsWrapper_0/inst/backward_converter/queue/ram_search_for_root_reg_0_127_0_0_i_4_n_0
+    SLICE_X17Y54         CARRY8 (Prop_CARRY8_SLICEL_CI_CO[1])
+                                                      0.055    11.182 f  design_2_i/TreePEsWrapper_0/inst/backward_converter/queue/ram_search_for_root_reg_0_127_0_0_i_3/CO[1]
+                         net (fo=11, routed)          0.477    11.659    design_2_i/TreePEsWrapper_0/inst/increment_1/queue/CO[0]_alias
+    SLICE_X13Y66         LUT6 (Prop_B6LUT_SLICEL_I4_O)
+                                                      0.064    11.723 r  design_2_i/TreePEsWrapper_0/inst/increment_1/queue/ram_features_0_reg_0_1_0_13_i_1__26_comp_replica_2/O
+                         net (fo=240, routed)         0.636    12.359    design_2_i/TreePEsWrapper_0/inst/increment_1/queue/ram_features_3_reg_0_1_14_27/WE
+    SLICE_X9Y76          RAMD32                                       r  design_2_i/TreePEsWrapper_0/inst/increment_1/queue/ram_features_3_reg_0_1_14_27/RAMA/WE
+  -------------------------------------------------------------------    -------------------
+
+                         (clock clk_pl_0 rise edge)
+                                                      6.000     6.000 r  
+    PS8_X0Y0             PS8                          0.000     6.000 r  design_2_i/zynq_ultra_ps_e_0/inst/PS8_i/PLCLK[0]
+                         net (fo=1, routed)           0.140     6.140    design_2_i/zynq_ultra_ps_e_0/inst/pl_clk_unbuffered[0]
+    BUFG_PS_X0Y58        BUFG_PS (Prop_BUFG_PS_I_O)
+                                                      0.027     6.167 r  design_2_i/zynq_ultra_ps_e_0/inst/buffer_pl_clk_0.PL_CLK_0_BUFG/O
+    X0Y1 (CLOCK_ROOT)    net (fo=87585, routed)       1.609     7.776    design_2_i/TreePEsWrapper_0/inst/increment_1/queue/ram_features_3_reg_0_1_14_27/WCLK
+    SLICE_X9Y76          RAMD32                                       r  design_2_i/TreePEsWrapper_0/inst/increment_1/queue/ram_features_3_reg_0_1_14_27/RAMA/CLK
+                         clock pessimism              0.107     7.883    
+                         clock uncertainty           -0.147     7.736    
+    SLICE_X9Y76          RAMD32 (Setup_A5LUT_SLICEM_CLK_WE)
+                                                     -0.192     7.544    design_2_i/TreePEsWrapper_0/inst/increment_1/queue/ram_features_3_reg_0_1_14_27/RAMA
+  -------------------------------------------------------------------
+                         required time                          7.544    
+                         arrival time                         -12.359    
+  -------------------------------------------------------------------
+                         slack                                 -4.815    
+
+
+
+

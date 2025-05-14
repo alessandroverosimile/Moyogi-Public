@@ -63,7 +63,7 @@ class TreePE(id: ElemId, n_attr: Int, n_classes: Int, n_depths: Int, info_bit: I
         io.sample_out.bits.shift := false.B
         io.sample_out.bits.search_for_root := !shift
         for(i <- 0 until n_classes){
-          io.sample_out.bits.scores(i) := scores_bits(i) + (Mux(((shift===false.B) & is_valid & (i.U === offset)),weights_bits(depth_indicator).asUInt(),0.U(16.W))).asFixedPoint(8.BP)
+          io.sample_out.bits.scores(i) := scores_bits(i) + (Mux(((shift===false.B) & is_valid & (i.U === offset)),weights_bits(depth_indicator).asUInt(),0.U(16.W))).asFixedPoint(6.BP)
         }
         io.sample_out.bits.dest := RegNext(queue.bits.tree_to_exec) === (n_loops-1).U
         io.sample_out.bits.last := RegNext(queue.bits.last)
@@ -79,7 +79,7 @@ class TreePE(id: ElemId, n_attr: Int, n_classes: Int, n_depths: Int, info_bit: I
         io.sample_out.bits.shift := false.B
         io.sample_out.bits.search_for_root := !shift || RegNext(queue.bits.search_for_root)
         for(i <- 0 until n_classes){
-          io.sample_out.bits.scores(i) := scores_bits(i) + (Mux((!RegNext(queue.bits.search_for_root) & (shift===false.B) & is_valid & (i.U === offset)),weights_bits(depth_indicator).asUInt(),0.U(16.W))).asFixedPoint(8.BP)
+          io.sample_out.bits.scores(i) := scores_bits(i) + (Mux((!RegNext(queue.bits.search_for_root) & (shift===false.B) & is_valid & (i.U === offset)),weights_bits(depth_indicator).asUInt(),0.U(16.W))).asFixedPoint(6.BP)
         }
         io.sample_out.bits.dest := RegNext(queue.bits.tree_to_exec) === (n_loops-1).U
         io.sample_out.bits.last := RegNext(queue.bits.last)

@@ -6,7 +6,9 @@ import chisel3.experimental._
 import spatial_templates.pe._
 import scala.math._
 
+
 //Tournament ranking implementation
+
 class EarlyTerminatorPE(id: ElemId, n_attr: Int, n_classes: Int, n_depths: Int, info_bit: Int, tree_bit: Int, max_votation: Double, n_ins: Int = 1) 
     extends PE(id) with WithFWConnection {
     val io = IO(new Bundle{
@@ -16,37 +18,37 @@ class EarlyTerminatorPE(id: ElemId, n_attr: Int, n_classes: Int, n_depths: Int, 
     })
 
     val queues = VecInit(Seq.tabulate(n_ins)(i => Queue(io.samples_in(i), 2)))
-    val max_votation_fp = max_votation.F(20.W, 8.BP)
+    val max_votation_fp = max_votation.F(20.W, 6.BP)
 
     val next_power = ceil(log(n_classes) / log(2)).toInt
     val nextPow2 = pow(2, next_power).toInt
 
     // Compute total scores
-    val total_scores = Wire(Vec(nextPow2, FixedPoint(16.W, 8.BP)))
+    val total_scores = Wire(Vec(nextPow2, FixedPoint(16.W, 6.BP)))
     for (i <- 0 until nextPow2) {
         if (i < n_classes){
             val sum = queues.map(_.bits.scores(i)).reduce(_ +& _)
             total_scores(i) := sum
         }
         else{
-            total_scores(i) := 0.F(16.W, 8.BP)
+            total_scores(i) := 0.F(16.W, 6.BP)
         }
     }
 
     val intermediate_valids = Reg(Vec(2 * next_power - 2, Bool()))
     val intermediate_dests = Reg(Vec(2 * next_power - 2, Bool()))
-    val intermediate_overall_scores = Reg(Vec(2 * next_power - 2, Vec(nextPow2, FixedPoint(16.W, 8.BP))))
+    val intermediate_overall_scores = Reg(Vec(2 * next_power - 2, Vec(n_classes, FixedPoint(16.W, 6.BP))))
     val intermediate_samples = Reg(Vec(2*next_power-1,new Sample(n_attr,n_classes,n_depths,info_bit,tree_bit))) 
-    val intermediate_samples_scores = Reg(Vec(2*next_power-1,Vec(n_ins, Vec(n_classes,FixedPoint(16.W,8.BP))))) 
-    val candidates = Reg(Vec(2*next_power-2, Vec(nextPow2/2, FixedPoint(16.W, 8.BP))))
+    val intermediate_samples_scores = Reg(Vec(2*next_power-1,Vec(n_ins, Vec(n_classes,FixedPoint(16.W,6.BP))))) 
+    val candidates = Reg(Vec(2*next_power-2, Vec(nextPow2/2, FixedPoint(16.W, 6.BP))))
     val candidates_indexes = Reg(Vec(next_power-1, Vec(nextPow2/2, UInt(8.W))))
-    val max1 = Reg(Vec(next_power-1,FixedPoint(16.W, 8.BP)))
-    val max2 = Wire(FixedPoint(16.W, 8.BP))
+    val max1 = Reg(Vec(next_power-1,FixedPoint(16.W, 6.BP)))
+    val max2 = Wire(FixedPoint(16.W, 6.BP))
 
     for (i <- 0 until 2*next_power-1){
         if (i==0){
             intermediate_valids(i) := queues(0).valid
-            intermediate_overall_scores(i) := total_scores
+            intermediate_overall_scores(i) := total_scores.take(n_classes)
             for(j <- 0 until n_ins){
                 intermediate_samples_scores(i)(j) := queues(j).bits.scores
             }
@@ -81,7 +83,11 @@ class EarlyTerminatorPE(id: ElemId, n_attr: Int, n_classes: Int, n_depths: Int, 
             val index = Mux(candidates(i-1)(0) > candidates(i-1)(1), candidates_indexes(i-1)(0), candidates_indexes(i-1)(1))
             when(index >= (nextPow2/2).U){
                 for (j <- 0 until nextPow2/2){
-                    candidates(i)(j) := Mux(index === (j+nextPow2/2).U, loser, intermediate_overall_scores(i-1)(j+nextPow2/2)) 
+                    if(j+nextPow2/2>=n_classes){
+                        candidates(i)(j) := Mux(index === (j+nextPow2/2).U, loser, 0.F(16.W,6.BP))
+                    }else{
+                        candidates(i)(j) := Mux(index === (j+nextPow2/2).U, loser, intermediate_overall_scores(i-1)(j+nextPow2/2))
+                    }
                 }
             }.otherwise{
                 for (j <- 0 until nextPow2/2){
@@ -107,7 +113,7 @@ class EarlyTerminatorPE(id: ElemId, n_attr: Int, n_classes: Int, n_depths: Int, 
         }
     }
 
-    val reamining_votes = max_votation_fp - intermediate_overall_scores(2*next_power-3).take(n_classes).map(x => x).reduce(_ + _)
+    val reamining_votes = max_votation_fp - intermediate_overall_scores(2*next_power-3).map(x => x).reduce(_ + _)
 
     val distance = max1(next_power-2) - max2
 
@@ -176,25 +182,23 @@ class EarlyTerminatorPE(id: ElemId, n_attr: Int, n_classes: Int, n_depths: Int, 
     })
 
     val queues = VecInit(Seq.tabulate(n_ins)(i => Queue(io.samples_in(i), 2)))
-    val max_votation_fp = max_votation.F(20.W, 8.BP)
+    val max_votation_fp = max_votation.F(18.W, 6.BP)
 
     // Compute total scores
-    val total_scores = Wire(Vec(n_classes, FixedPoint(16.W, 8.BP)))
+    val total_scores = Wire(Vec(n_classes, FixedPoint(16.W, 6.BP)))
     for (i <- 0 until n_classes) {
         val sum = queues.map(_.bits.scores(i)).reduce(_ +& _)
         total_scores(i) := sum
     }
-    val intermediate_valids = RegInit(VecInit(Seq.fill(n_classes - 2)(false.B)))
-    val intermediate_dests = RegInit(VecInit(Seq.fill(n_classes - 2)(false.B)))
+    val intermediate_valids = Reg(Vec((n_classes - 2), Bool()))
+    val intermediate_dests = Reg(Vec((n_classes - 2), Bool()))
     val intermediate_samples = Reg(Vec(n_classes-2,new Sample(n_attr,n_classes,n_depths,info_bit,tree_bit))) 
-    val intermediate_samples_scores = Reg(Vec(n_classes-2,Vec(n_ins, Vec(n_classes,FixedPoint(16.W,8.BP))))) 
-    val intermediate_overall_scores = RegInit(VecInit(Seq.fill(n_classes - 2)(
-        VecInit(Seq.fill(n_classes)(0.F(16.W, 8.BP)))
-    )))
-    val max1 = Reg(Vec(n_classes-2, FixedPoint(16.W, 8.BP)))
-    val max2 = Reg(Vec(n_classes-2, FixedPoint(16.W, 8.BP)))
-    val final_max1 = Wire(FixedPoint(16.W, 8.BP))
-    val final_max2 = Wire(FixedPoint(16.W, 8.BP)) 
+    val intermediate_samples_scores = Reg(Vec(n_classes-2,Vec(n_ins, Vec(n_classes,FixedPoint(16.W,6.BP))))) 
+    val intermediate_overall_scores = Reg(Vec(n_classes - 2, Vec(n_classes, FixedPoint(16.W, 6.BP))))
+    val max1 = Reg(Vec(n_classes-2, FixedPoint(16.W, 6.BP)))
+    val max2 = Reg(Vec(n_classes-2, FixedPoint(16.W, 6.BP)))
+    val final_max1 = Wire(FixedPoint(16.W, 6.BP))
+    val final_max2 = Wire(FixedPoint(16.W, 6.BP)) 
 
     for (i <- 0 until n_classes-1){
         if (i==0){
@@ -268,9 +272,9 @@ class EarlyTerminatorPE(id: ElemId, n_attr: Int, n_classes: Int, n_depths: Int, 
             io.samples_back(i).valid := intermediate_valids(n_classes-3)
             io.samples_back(i).bits.features := intermediate_samples(n_classes-3).features
             io.samples_back(i).bits.weights := intermediate_samples(n_classes-3).weights
-            io.samples_back(i).bits.tree_to_exec := intermediate_samples(n_classes-3).tree_to_exec
+            io.samples_back(i).bits.tree_to_exec := intermediate_samples(n_classes-3).tree_to_exec + 1.U
             io.samples_back(i).bits.shift := intermediate_samples(n_classes-3).shift
-            io.samples_back(i).bits.offset := intermediate_samples(n_classes-3).offset
+            io.samples_back(i).bits.offset := intermediate_samples(n_classes-3).tree_to_exec + 1.U
             io.samples_back(i).bits.dest := false.B
             io.samples_back(i).bits.search_for_root := intermediate_samples(n_classes-3).search_for_root
             io.samples_back(i).bits.last := intermediate_samples(n_classes-3).last
@@ -288,12 +292,11 @@ class EarlyTerminatorPE(id: ElemId, n_attr: Int, n_classes: Int, n_depths: Int, 
         backward_converter.io.sample_in <> io.sample_out
     }
 
-    def linkToDest(incr: IncrementTreePE, i:Int){ 
-        io.samples_back(i) <> incr.io.sample_in
+    def linkToDest(fi: FirstInterconnectPE, i:Int){ 
+        io.samples_back(i) <> fi.io.sample_looping
     }
 }
 */
-
 /*
 //Old implementation. All in logic, one stage
 
@@ -301,25 +304,25 @@ val next_power = ceil(log(n_classes) / log(2)).toInt
 val nextPow2 = pow(2, next_power).toInt
 
 // Compute total scores
-val total_scores = Wire(Vec(nextPow2, FixedPoint(16.W, 8.BP)))
+val total_scores = Wire(Vec(nextPow2, FixedPoint(16.W, 6.BP)))
 for (i <- 0 until nextPow2) {
     if (i < n_classes){
         val sum = queues.map(_.bits.scores(i)).reduce(_ +& _)
         total_scores(i) := sum
     }
     else{
-        total_scores(i) := 0.F(16.W, 8.BP)
+        total_scores(i) := 0.F(16.W, 6.BP)
     }
     //printf(p"SUM ${total_scores(i).asSInt}\n")
 }
 
-val max1 = Wire(FixedPoint(16.W,8.BP))
-val max2 = Wire(FixedPoint(16.W,8.BP))
+val max1 = Wire(FixedPoint(16.W,6.BP))
+val max2 = Wire(FixedPoint(16.W,6.BP))
 
 val half_cycle = ceil((2*next_power-1)/2.0).toInt-1
-val loser = Wire(FixedPoint(16.W,8.BP))
+val loser = Wire(FixedPoint(16.W,6.BP))
 val best_address = Wire(UInt(next_power.W))
-var inputs = Wire(Vec(nextPow2, FixedPoint(16.W,8.BP)))
+var inputs = Wire(Vec(nextPow2, FixedPoint(16.W,6.BP)))
 var inputs_indexes = Wire(Vec(nextPow2, UInt(next_power.W)))
 for (j <- 0 until nextPow2){
     inputs(j) := total_scores(j)
@@ -330,7 +333,7 @@ for (i <- 0 until 2*next_power-1){
 
     if (i < half_cycle){
         val n_results = (nextPow2/pow(2,i+1)).toInt
-        val results = Wire(Vec(n_results,FixedPoint(16.W,8.BP)))
+        val results = Wire(Vec(n_results,FixedPoint(16.W,6.BP)))
         val indexes = Wire(Vec(n_results,UInt(next_power.W)))
         for (j <- 0 until n_results){
             results(j) := Mux(inputs(2*j)>inputs(2*j+1),inputs(2*j),inputs(2*j+1))
@@ -344,7 +347,7 @@ for (i <- 0 until 2*next_power-1){
             loser := Mux(inputs(0)<inputs(1),inputs(0),inputs(1))
             best_address := Mux(inputs(0)>inputs(1),inputs_indexes(0),inputs_indexes(1))
             val n_results = (nextPow2/2).toInt
-            val results = Wire(Vec(n_results, FixedPoint(16.W,8.BP)))
+            val results = Wire(Vec(n_results, FixedPoint(16.W,6.BP)))
             val boolean_check = Wire(Bool())
             boolean_check := Mux(best_address<((nextPow2/2).toInt).U,true.B,false.B)
             for (j <- 0 until n_results){
@@ -354,7 +357,7 @@ for (i <- 0 until 2*next_power-1){
         }else{
             if (i<2*next_power-2){
                 val n_results = (nextPow2/pow(2,i-half_cycle+1)).toInt
-                val results = Wire(Vec(n_results,FixedPoint(16.W,8.BP)))
+                val results = Wire(Vec(n_results,FixedPoint(16.W,6.BP)))
                 for (j <- 0 until n_results){
                     results(j) := Mux(inputs(2*j)>inputs(2*j+1),inputs(2*j),inputs(2*j+1))
                 }
@@ -375,19 +378,19 @@ val next_power = ceil(log(n_classes) / log(2)).toInt
 val nextPow2 = pow(2, next_power).toInt
 
 // Compute total scores
-val total_scores = Wire(Vec(nextPow2, FixedPoint(16.W, 8.BP)))
+val total_scores = Wire(Vec(nextPow2, FixedPoint(16.W, 6.BP)))
 for (i <- 0 until nextPow2) {
     if (i < n_classes){
         val sum = queues.map(_.bits.scores(i)).reduce(_ +& _)
         total_scores(i) := sum
     }
     else{
-        total_scores(i) := 0.F(16.W, 8.BP)
+        total_scores(i) := 0.F(16.W, 6.BP)
     }
     //printf(p"SUM ${total_scores(i).asSInt}\n")
 }
-val max1 = Wire(FixedPoint(16.W,8.BP))
-val max2 = Wire(FixedPoint(16.W,8.BP))
+val max1 = Wire(FixedPoint(16.W,6.BP))
+val max2 = Wire(FixedPoint(16.W,6.BP))
 
 def parallelMax(vec: Vec[FixedPoint]): (FixedPoint,FixedPoint,UInt) = {
     var current = vec
@@ -395,9 +398,9 @@ def parallelMax(vec: Vec[FixedPoint]): (FixedPoint,FixedPoint,UInt) = {
     for (j <- 0 until nextPow2){
         indexes(j) := j.U
     }
-    var loser = Wire(FixedPoint(16.W,8.BP))
+    var loser = Wire(FixedPoint(16.W,6.BP))
     for (level <- 0 until log2Ceil(nextPow2)) {
-        val next = Wire(Vec(current.length / 2, FixedPoint(16.W, 8.BP)))
+        val next = Wire(Vec(current.length / 2, FixedPoint(16.W, 6.BP)))
         val next_indexes = Wire(Vec(current.length / 2, UInt(next_power.W)))
         if (level == log2Ceil(nextPow2)-1){
             next(0) := Mux(current(0) > current(1), current(0), current(1))
@@ -418,7 +421,7 @@ def parallelMax(vec: Vec[FixedPoint]): (FixedPoint,FixedPoint,UInt) = {
 def secondParallelMax(vec: Vec[FixedPoint]): FixedPoint = {
     var current = vec
     for (level <- 0 until log2Ceil(nextPow2/2)) {
-        val next = Wire(Vec(current.length / 2, FixedPoint(16.W, 8.BP)))
+        val next = Wire(Vec(current.length / 2, FixedPoint(16.W, 6.BP)))
         for (i <- 0 until current.length / 2) {
             next(i) := Mux(current(2 * i) > current(2 * i + 1), current(2 * i), current(2 * i + 1))
         }
@@ -428,7 +431,7 @@ def secondParallelMax(vec: Vec[FixedPoint]): FixedPoint = {
 }
 
 val index = Wire(UInt(next_power.W))
-val loser = Wire(FixedPoint(16.W,8.BP))
+val loser = Wire(FixedPoint(16.W,6.BP))
 val temp = parallelMax(total_scores) // Compute the first max
 
 max1 := temp._1
@@ -436,7 +439,7 @@ loser := temp._2
 index := temp._3
 
 // **Step 2: Find Second Max Using a Similar Reduction Tree**
-val losers = Wire(Vec(nextPow2/2, FixedPoint(16.W, 8.BP)))
+val losers = Wire(Vec(nextPow2/2, FixedPoint(16.W, 6.BP)))
 
 // Populate losers with the values of the half side of the winners, but replace max1 with 0
 when(index>=(nextPow2/2).U){
