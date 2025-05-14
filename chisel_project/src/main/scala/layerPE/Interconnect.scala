@@ -17,10 +17,10 @@ class LastInterconnectPE(id: ElemId, n_attr: Int, n_classes: Int, n_depths: Int,
 
     io.sample_looping.bits := queue.bits
     io.sample_leaving.bits.features := queue.bits.features 
-    io.sample_leaving.bits.offset := queue.bits.offset
+    io.sample_leaving.bits.offset := queue.bits.tree_to_exec + 1.U 
     io.sample_leaving.bits.shift := queue.bits.shift
     io.sample_leaving.bits.search_for_root := queue.bits.search_for_root
-    io.sample_leaving.bits.tree_to_exec := queue.bits.tree_to_exec
+    io.sample_leaving.bits.tree_to_exec := queue.bits.tree_to_exec + 1.U
     io.sample_leaving.bits.scores := queue.bits.scores 
     io.sample_leaving.bits.weights := queue.bits.weights 
     io.sample_leaving.bits.dest := queue.bits.dest 
@@ -31,8 +31,8 @@ class LastInterconnectPE(id: ElemId, n_attr: Int, n_classes: Int, n_depths: Int,
 
     queue.ready := (io.sample_leaving.ready & queue.bits.dest) | (io.sample_looping.ready & !queue.bits.dest)
 
-    def linkToDest(increment_pe: IncrementTreePE) {
-        io.sample_looping <> increment_pe.io.sample_in
+    def linkToDest(fi: FirstInterconnectPE) {
+        io.sample_looping <> fi.io.sample_looping
     }
 
     def linkToDest(voter_pe: VoterPE, i: Int) {

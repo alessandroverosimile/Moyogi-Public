@@ -60,7 +60,6 @@ class TreePEsWrapper(max_depth: Int, n_attr: Int, n_classes: Int, n_depths: Int,
                 val pes = Seq.tabulate(num_pes)(j => Module(new TreePEwithBRAM(new ElemId(2,i,j,0), n_attr,n_classes,n_depths,info_bit,tree_bit,attr_bit,j%max_depth==0,structure_list(i)(1))))
                 val brams = Seq.tabulate(num_pes)(j => Module(new BRAMBlackBoxAsymm(32,64,13))) 
                 val first_interconnect = Module(new FirstInterconnectPE(new ElemId(2,i,1,0),n_attr,n_classes,n_depths,info_bit,tree_bit))
-                val increment = Module(new IncrementTreePE(new ElemId(2,i,num_pes+3,0),n_attr,n_classes,n_depths,info_bit,tree_bit))
 
                 //brams link
                 for(j <- 0 until structure_list(i)(0)){
@@ -91,8 +90,7 @@ class TreePEsWrapper(max_depth: Int, n_attr: Int, n_classes: Int, n_depths: Int,
                         pes(j).linkToDest(pes(j+1))
                     }
                 }
-                early_terminator.linkToDest(increment,increment.id.x)
-                increment.linkToDest(first_interconnect)
+                early_terminator.linkToDest(first_interconnect,first_interconnect.id.x)
             }
 
             when(wrapper_io.sample_in.TVALID & !counting & !stop_count){
@@ -113,7 +111,7 @@ class TreePEsWrapper(max_depth: Int, n_attr: Int, n_classes: Int, n_depths: Int,
                 val brams = Seq.tabulate(num_pes)(j => Module(new BRAMBlackBoxAsymm(32,64,13))) 
                 val first_interconnect = Module(new FirstInterconnectPE(new ElemId(2,i,1,0),n_attr,n_classes,n_depths,info_bit,tree_bit))
                 val last_interconnect = Module(new LastInterconnectPE(new ElemId(2,i,structure_list(i)(0)+2,0),n_attr,n_classes,n_depths,info_bit,tree_bit))
-                val increment = Module(new IncrementTreePE(new ElemId(2,i,num_pes+3,0),n_attr,n_classes,n_depths,info_bit,tree_bit))
+                
                 //brams link
                 for(j <- 0 until structure_list(i)(0)){
 
@@ -145,9 +143,8 @@ class TreePEsWrapper(max_depth: Int, n_attr: Int, n_classes: Int, n_depths: Int,
                     }
                 }
                 
-                last_interconnect.linkToDest(increment)
+                last_interconnect.linkToDest(first_interconnect)
                 last_interconnect.linkToDest(voter,last_interconnect.id.x)
-                increment.linkToDest(first_interconnect)
             }
             when(wrapper_io.sample_in.TVALID & !counting & !stop_count){
                 counting := true.B
@@ -190,7 +187,7 @@ class TreePEsWrapper(max_depth: Int, n_attr: Int, n_classes: Int, n_depths: Int,
                 val pes = Seq.tabulate(num_pes)(j => Module(new TreePEwithBRAM(new ElemId(2,i,j,0), n_attr,n_classes,n_depths,info_bit,tree_bit,attr_bit,j%max_depth==0,structure_list(i)(1))))
                 val brams = Seq.tabulate(num_pes)(j => Module(new BRAMLikeMem1(new ElemId(2,i,j,0),64,13)))
                 val first_interconnect = Module(new FirstInterconnectPE(new ElemId(2,i,1,0),n_attr,n_classes,n_depths,info_bit,tree_bit))
-                val increment = Module(new IncrementTreePE(new ElemId(2,i,num_pes+3,0),n_attr,n_classes,n_depths,info_bit,tree_bit))
+                
                 //brams link
                 Seq.tabulate(num_pes)( j => brams(j).connect(pes(j).pe_io.mem, 0, 0))
                 Seq.tabulate(num_pes)( j => brams(j).connect(brams_io(j+total_pes), 1))
@@ -210,8 +207,7 @@ class TreePEsWrapper(max_depth: Int, n_attr: Int, n_classes: Int, n_depths: Int,
                     }
                 }
                 
-                early_terminator.linkToDest(increment,increment.id.x)
-                increment.linkToDest(first_interconnect)
+                early_terminator.linkToDest(first_interconnect,first_interconnect.id.x)
             }
 
             when(wrapper_io.sample_in.TVALID & !counting & !stop_count){
@@ -232,7 +228,7 @@ class TreePEsWrapper(max_depth: Int, n_attr: Int, n_classes: Int, n_depths: Int,
                 val brams = Seq.tabulate(num_pes)(j => Module(new BRAMLikeMem1(new ElemId(2,i,j,0),64,13)))
                 val first_interconnect = Module(new FirstInterconnectPE(new ElemId(2,i,1,0),n_attr,n_classes,n_depths,info_bit,tree_bit))
                 val last_interconnect = Module(new LastInterconnectPE(new ElemId(2,i,structure_list(i)(0)+2,0),n_attr,n_classes,n_depths,info_bit,tree_bit))
-                val increment = Module(new IncrementTreePE(new ElemId(2,i,num_pes+3,0),n_attr,n_classes,n_depths,info_bit,tree_bit))
+                
                 //brams link
                 Seq.tabulate(num_pes)( j => brams(j).connect(pes(j).pe_io.mem, 0, 0))
                 Seq.tabulate(num_pes)( j => brams(j).connect(brams_io(j+total_pes), 1))
@@ -252,9 +248,8 @@ class TreePEsWrapper(max_depth: Int, n_attr: Int, n_classes: Int, n_depths: Int,
                     }
                 }
                 
-                last_interconnect.linkToDest(increment)
+                last_interconnect.linkToDest(first_interconnect)
                 last_interconnect.linkToDest(voter,last_interconnect.id.x)
-                increment.linkToDest(first_interconnect)
             }
 
             when(wrapper_io.sample_in.TVALID & !counting & !stop_count){
