@@ -14,6 +14,8 @@ from software_host.Dataset import import_accelerometer
 
 VIVADO_VERSION = 2023.1
 
+#Optimal number of paths estimated by the resource estimation model
+
 def get_best_architecture(min_width, max_depth, n_trees, necessary_set_of_pes, max_LUTs, max_FFs, max_BRAMs, LUTs_tolerance = 700, FFs_tolerance = 4000, BRAMs_tolerance = 16, wns_tolerance = 50):
     with open('resource_estimation_models/LUTs_model.pkl', 'rb') as f:
         LUTs_model = pickle.load(f)
@@ -30,8 +32,8 @@ def get_best_architecture(min_width, max_depth, n_trees, necessary_set_of_pes, m
     with open('resource_estimation_models/PS8FFs_model.pkl', 'rb') as f:
         PS8FFs_model = pickle.load(f)
 
-    with open('resource_estimation_models/WNS_model.pkl', 'rb') as f:
-        WNS_model = pickle.load(f)
+    #with open('resource_estimation_models/WNS_model.pkl', 'rb') as f:
+    #    WNS_model = pickle.load(f)
 
     df = pd.read_csv('resource_estimation_models/resource_consumption_dwc.csv', delimiter=';')
     dwc_dict = {}
@@ -82,8 +84,8 @@ def get_best_architecture(min_width, max_depth, n_trees, necessary_set_of_pes, m
             sample_red_poly = np.delete(sample_poly,[0,3,5], axis=1)
             wrapper_BRAMs = BRAMs_model.predict(sample_red_poly)[0]
 
-            sample_red_poly = np.delete(sample_poly,[4,7,8], axis=1)
-            wns = WNS_model.predict(sample_red_poly)[0]
+            #sample_red_poly = np.delete(sample_poly,[4,7,8], axis=1)
+            #wns = WNS_model.predict(sample_red_poly)[0]
             
             DWC_LUTs = dwc_dict[w][0]
             DWC_FFs = dwc_dict[w][1]
@@ -101,16 +103,16 @@ def get_best_architecture(min_width, max_depth, n_trees, necessary_set_of_pes, m
                 best_FFs = FFs
                 best_BRAMs = BRAMs
                 best_w = w
-                best_wns = wns
+                #best_wns = wns
         
         print(f"Trial with N PATHS = {n_paths}")
-        print("LUTs, FFs, BRAMs, WNS")
-        print(best_LUTs, best_FFs, best_BRAMs, best_wns)
+        print("LUTs, FFs, BRAMs")
+        print(best_LUTs, best_FFs, best_BRAMs)
         if best_LUTs < max_LUTs - LUTs_tolerance and best_FFs < max_FFs - FFs_tolerance and best_BRAMs < max_BRAMs - BRAMs_tolerance:# and best_wns >= wns_tolerance:
             found = True
             saved_width = best_w
             expected_consumption = (best_LUTs, best_FFs, best_BRAMs)
-            expected_wns = best_wns
+            #expected_wns = best_wns
             print(f"Configuration with pes_per_path, n_paths, dim = {pes_per_path}, {n_paths}, {best_w} is synthesizable. Trying one more path...")
             best_n_paths = n_paths
             n_paths += 1
@@ -118,10 +120,7 @@ def get_best_architecture(min_width, max_depth, n_trees, necessary_set_of_pes, m
         else:
             stop = True
             if found:
-                if best_wns < wns_tolerance:
-                    print(f"Configuration with pes_per_path, n_paths, dim = {pes_per_path}, {n_paths}, {best_w} is not synthesizable due to predicted timing issues. Best configuration with n_paths = {best_n_paths}")
-                else:
-                    print(f"Configuration with pes_per_path, n_paths, dim = {pes_per_path}, {n_paths}, {best_w} is not synthesizable due to predicted resource overutilization. Best configuration with n_paths = {best_n_paths}")
+                print(f"Configuration with pes_per_path, n_paths, dim = {pes_per_path}, {n_paths}, {best_w} is not synthesizable due to predicted resource overutilization. Best configuration with n_paths = {best_n_paths}")
             else:
                 print(f"Configuration with pes_per_path, n_paths, dim = {pes_per_path}, {n_paths}, {best_w} is not synthesizable. No configuration found")
             
@@ -174,7 +173,7 @@ def main():
     print("N paths", n_paths)
     print("Best width", best_width)
     print("Expected consumption", expected_consumption)
-    print("Expected wns", expected_wns)
+    #print("Expected wns", expected_wns)
     
     os.chdir(f"{curdir}/../chisel_project")
 
@@ -205,12 +204,13 @@ def main():
 
     '''
 
-    max_votation = n_trees #NON-WEIGHTED CASE, COMMENT THIS LINE IF YOU WANT TO CONSIDER THE WEIGHTED CASE 
+    max_votation = n_trees #NON-WEIGHTED CASE, COMMENT THIS LINE AND UNCOMMENT MODEL TRAINING IF YOU WANT TO CONSIDER THE WEIGHTED CASE 
 
     print("Execution with depth, n_trees, freq, n_paths, n_attr equals to ",  max_depth, n_trees, frq, n_paths, n_attr)
     
     #sys.exit() #activate to debug the resource estimation models
-    
+    string = f"N paths: {n_paths}, Overall sets of PEs: {set_of_pes}, Width: {best_width}"
+
     cmd = f'sbt "runMain YoseUe_SATL.VerilogGenerator {n_trees} {max_depth} {min_depth} {n_attr} {n_classes} {n_paths} {best_width} {necessary_set_of_pes} {early_termination} {max_votation}"'
     success = os.system(cmd)
 
@@ -274,6 +274,9 @@ def main():
     os.system(cmd)
     if(success > 0):
         print("Timing report not created")
+
+    cmd = "echo " + string + " > ../Deploys/DeployParametricDepth" + str(max_depth) + 'Trees' + str(n_trees) + 'Frq' + str(frq) + 'Paths' + str(n_paths) + 'Attr' + str(n_attr) + '/description.txt' 
+    os.system(cmd)
 
     print("Synthesis with " + str(max_depth) + " depth, " + str(n_trees) + " estimators in " + str(n_paths) + " paths with " + str(n_attr) + " attributes completed")
 
