@@ -9,7 +9,7 @@ import math
 import pickle
 from sklearn.preprocessing import PolynomialFeatures
 
-VIVADO_VERSION = 2023.1
+VIVADO_VERSION =  2024.2
 
 def main():
     
@@ -82,14 +82,14 @@ def main():
     template = env.get_template('vivadoScript.tcl.jinja')
     template.stream(n_pes=np.sum(best_combination), dma_bits=dma_bits, trgt_freq=frq, width=int(width/8), dma_bytes=int(dma_bits/8),ps_version=ps_version).dump('vivadoScript.tcl')
     
-    cmd = f"source /xilinx/software/Vivado/2021.2/settings64.sh && vivado -nojournal -nolog -mode batch -source vivadoScript.tcl"
+    cmd = f"/bin/bash -c 'source /home/xilinx/Vivado/2021.2/settings64.sh && vivado -nojournal -nolog -mode batch -source vivadoScript.tcl'"
     success = os.system(cmd)
 
     if(success > 0):
         print("'project1' failed")
         sys.exit(-10)
     
-    cmd = "source /xilinx/software/Vivado/2021.2/settings64.sh && vivado -nojournal -nolog -mode batch -source synth_and_impl.tcl"
+    cmd = "/bin/bash -c 'source /home/xilinx/Vivado/2021.2/settings64.sh && vivado -nojournal -nolog -mode batch -source synth_and_impl.tcl'"
     success = os.system(cmd)
 
     if(success > 0):

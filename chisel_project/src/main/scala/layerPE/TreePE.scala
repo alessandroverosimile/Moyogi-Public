@@ -5,6 +5,7 @@ import chisel3.util._
 import chisel3.experimental._
 import spatial_templates.pe._
 import spatial_templates.me._
+import scala.math._
 
 /** This abstract class represents a Processing Element for a generic spatial
   * template

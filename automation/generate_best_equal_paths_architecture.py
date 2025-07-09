@@ -12,7 +12,7 @@ sys.path.append("../")
 from software_host.MultiDepthRandomForest import MultiDepthNeuralRandomForestClassifier
 from software_host.Dataset import import_accelerometer
 
-VIVADO_VERSION = 2023.1
+VIVADO_VERSION =  2024.2
 
 #Optimal number of paths estimated by the resource estimation model
 
@@ -232,14 +232,14 @@ def main():
     dma_bytes = int(dma_bits/8)
     template.stream(n_pes=set_of_pes*max_depth, dma_bits=dma_bits, trgt_freq=frq, width=width_bytes, dma_bytes=dma_bytes,ps_version=ps_version).dump('vivadoScript.tcl')
 
-    cmd = f"source /xilinx/software/Vivado/{VIVADO_VERSION}/settings64.sh && vivado -nojournal -nolog -mode batch -source vivadoScript.tcl"
+    cmd = f"/bin/bash -c 'source /home/xilinx/Vivado/{VIVADO_VERSION}/settings64.sh && vivado -nojournal -nolog -mode batch -source vivadoScript.tcl'"
     success = os.system(cmd)
 
     if(success > 0):
         print("'project1' failed")
         sys.exit(-10)
     
-    cmd = f"source /xilinx/software/Vivado/{VIVADO_VERSION}/settings64.sh && vivado -nojournal -nolog -mode batch -source synth_and_impl.tcl"
+    cmd = f"/bin/bash -c 'source /home/xilinx/Vivado/{VIVADO_VERSION}/settings64.sh && vivado -nojournal -nolog -mode batch -source synth_and_impl.tcl'"
     success = os.system(cmd)
 
     if(success > 0):

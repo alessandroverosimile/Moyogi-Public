@@ -19,7 +19,8 @@ DeploysResourcePrediction/*
 DeploysSinglePath/*
 IntercAle/*
 old_components/*
-automation/block_diagram/*
+automation/block_diagram
+automation/block_diagram_old
 vivado_project/*
 automation/vivadoScript.tcl
 automation/tryDiffNPaths.py
@@ -30,6 +31,7 @@ chisel_project/*.fir
 
 ### XilinxISE template
 # intermediate build files
+*.Xil
 *.jou
 *.str
 *.bgn

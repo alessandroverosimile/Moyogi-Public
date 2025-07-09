@@ -16,10 +16,11 @@ class EarlyTerminatorPE(id: ElemId, n_attr: Int, n_classes: Int, n_depths: Int, 
         val samples_back = Vec(n_ins,Decoupled(new Sample(n_attr,n_classes,n_depths,info_bit,tree_bit)))
         val sample_out = Decoupled(new Sample(n_attr,n_classes,n_depths,info_bit,tree_bit))
     })
-
+    
     val queues = VecInit(Seq.tabulate(n_ins)(i => Queue(io.samples_in(i), 2)))
-    val max_votation_fp = max_votation.F(20.W, 6.BP)
 
+    val max_votation_fp = max_votation.F(16.W, 6.BP)
+    
     val next_power = ceil(log(n_classes) / log(2)).toInt
     val nextPow2 = pow(2, next_power).toInt
 
@@ -119,8 +120,9 @@ class EarlyTerminatorPE(id: ElemId, n_attr: Int, n_classes: Int, n_depths: Int, 
 
     val condition = distance >= reamining_votes
     val dest = intermediate_dests(2*next_power-3)
+    val last = intermediate_samples(2*next_power-3).last
 
-    when(condition | dest){
+    when(dest | (condition & !last)){
         io.sample_out.valid := intermediate_valids(2*next_power-3)
         io.sample_out.bits.features := intermediate_samples(2*next_power-3).features
         io.sample_out.bits.weights := intermediate_samples(2*next_power-3).weights
