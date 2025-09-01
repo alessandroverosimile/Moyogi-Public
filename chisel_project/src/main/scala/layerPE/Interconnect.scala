@@ -15,7 +15,20 @@ class LastInterconnectPE(id: ElemId, n_attr: Int, n_classes: Int, n_depths: Int,
 
     val queue = Queue(io.sample_in,2)
 
-    io.sample_looping.bits := queue.bits
+    io.sample_looping.valid := queue.valid & !queue.bits.dest
+    io.sample_leaving.valid := queue.valid & queue.bits.dest
+
+    io.sample_looping.bits.features := queue.bits.features 
+    io.sample_looping.bits.offset := queue.bits.tree_to_exec + 1.U 
+    io.sample_looping.bits.shift := queue.bits.shift
+    io.sample_looping.bits.search_for_root := queue.bits.search_for_root
+    io.sample_looping.bits.tree_to_exec := queue.bits.tree_to_exec + 1.U
+    io.sample_looping.bits.scores := queue.bits.scores 
+    io.sample_looping.bits.weights := queue.bits.weights 
+    io.sample_looping.bits.dest := queue.bits.dest 
+    io.sample_looping.bits.last := queue.bits.last
+    io.sample_looping.bits.clock_cycles := queue.bits.clock_cycles
+
     io.sample_leaving.bits.features := queue.bits.features 
     io.sample_leaving.bits.offset := queue.bits.tree_to_exec + 1.U 
     io.sample_leaving.bits.shift := queue.bits.shift
@@ -25,8 +38,6 @@ class LastInterconnectPE(id: ElemId, n_attr: Int, n_classes: Int, n_depths: Int,
     io.sample_leaving.bits.weights := queue.bits.weights 
     io.sample_leaving.bits.dest := queue.bits.dest 
     io.sample_leaving.bits.last := queue.bits.last && queue.bits.dest
-    io.sample_looping.valid := queue.valid & !queue.bits.dest
-    io.sample_leaving.valid := queue.valid & queue.bits.dest
     io.sample_leaving.bits.clock_cycles := queue.bits.clock_cycles
 
     queue.ready := (io.sample_leaving.ready & queue.bits.dest) | (io.sample_looping.ready & !queue.bits.dest)

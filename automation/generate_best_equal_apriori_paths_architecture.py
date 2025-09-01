@@ -56,7 +56,7 @@ def main():
 
     dma_bits = 2**int(np.log2(width))
 
-    max_votation = int(n_trees/4) #NON-WEIGHTED CASE, COMMENT THIS LINE AND UNCOMMENT MODEL TRAINING IF YOU WANT TO CONSIDER THE WEIGHTED CASE 
+    max_votation = n_trees/4 #NON-WEIGHTED CASE, COMMENT THIS LINE AND UNCOMMENT MODEL TRAINING IF YOU WANT TO CONSIDER THE WEIGHTED CASE 
 
     print("Execution with depth, n_trees, freq, n_paths, n_attr equals to ",  max_depth, n_trees, frq, n_paths, n_attr)
     

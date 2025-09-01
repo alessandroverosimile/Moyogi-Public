@@ -2214,7 +2214,7 @@ class TreePEsWrapperTester extends AnyFreeSpec with ChiselScalatestTester {
     val info_bit = 10
     val tree_bit = 8
     val early_termination = true
-    val max_votation = 10
+    val max_votation = 2.5
     val attr_bit = (log(n_attr)/log(2)-0.00001).toInt + 1
 
     val bram_size = 36*1024
@@ -2271,7 +2271,7 @@ class TreePEsWrapperTester extends AnyFreeSpec with ChiselScalatestTester {
               c.wrapper_io.sample_in.TVALID.poke(false.B)
             }
             //insert tdata coherent with the dimension
-            c.wrapper_io.sample_in.TDATA.poke((BigInt("38479108820771292738015663088187251346781887150704259640605184629471601676637232869176495454699914678397709647872", 10)+i).U(384.W))
+            c.wrapper_io.sample_in.TDATA.poke((BigInt("9619777205192823184503915772046812836695471787676064910169686103858291085459608381619927573878403539065630687232", 10)+i).U(384.W))
             if (i==(n_samples*3-3)){
               c.wrapper_io.sample_in.TLAST.poke(true.B)
             }else{
@@ -2311,7 +2311,6 @@ class TreePEsWrapperTester extends AnyFreeSpec with ChiselScalatestTester {
               println(c.wrapper_io.sample_out.TLAST.peek())
               println(c.wrapper_io.sample_out.TVALID.peek())
               val data = c.wrapper_io.sample_out.TDATA.peek()
-              if (last){
 
               println("TDATA: ", data.litValue)
               
@@ -2325,14 +2324,14 @@ class TreePEsWrapperTester extends AnyFreeSpec with ChiselScalatestTester {
               println("SCORES: ")
               for (i <- 0 until n_classes){
                 val score = data(n_attr*32+48+(i+1)*16-1,n_attr*32+48+i*16).litValue
-                val fixedPointValue: Double = (score >> 6).toDouble + ((score & BigInt("FF", 16)).toDouble) / pow(2, 8)
+                val fixedPointValue: Double = score.toDouble / 64.0
                 println(fixedPointValue)
               }
               
               println("WEIGHTS: ")
               for (i <- 0 until n_depths){
                 val weight = data(n_attr*32+48+n_classes*32+(i+1)*32-1,n_attr*32+48+n_classes*32+i*32).litValue
-                val fixedPointValue: Double = (weight >> 6).toDouble + ((weight & BigInt("FF", 16)).toDouble) / pow(2, 8)
+                val fixedPointValue: Double = score.toDouble / 64.0
                 println(fixedPointValue)
               }
               println("SHIFT, OFFSET, TREE_TO_EXEC, SFR, TIMER")
@@ -2346,7 +2345,7 @@ class TreePEsWrapperTester extends AnyFreeSpec with ChiselScalatestTester {
               }
               last_cycle = data(n_attr*32+48+n_classes*16+31,n_attr*32+48+n_classes*16).litValue.toInt
               println(first_cycle, last_cycle)
-              }
+              
             }
             c.clock.step()
             if(counting)
