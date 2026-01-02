@@ -16,20 +16,25 @@ VIVADO_VERSION =  2024.2
 
 #Optimal number of paths estimated by the resource estimation model
 
-def get_best_architecture(min_width, max_depth, n_trees, necessary_set_of_pes, max_LUTs, max_FFs, max_BRAMs, LUTs_tolerance = 700, FFs_tolerance = 4000, BRAMs_tolerance = 16, wns_tolerance = 50):
-    with open('resource_estimation_models/LUTs_model.pkl', 'rb') as f:
+def get_best_architecture(min_width, max_depth, n_trees, necessary_set_of_pes, max_LUTs, max_FFs, max_BRAMs, early_termination, LUTs_tolerance = 700, FFs_tolerance = 4000, BRAMs_tolerance = 16, wns_tolerance = 50):
+    if early_termination:
+        models_dir = "resource_estimation_models_et"
+    else:
+        models_dir = "resource_estimation_models"
+    
+    with open(f'{models_dir}/LUTs_model.pkl', 'rb') as f:
         LUTs_model = pickle.load(f)
     
-    with open('resource_estimation_models/FFs_model.pkl', 'rb') as f:
+    with open(f'{models_dir}/FFs_model.pkl', 'rb') as f:
         FFs_model = pickle.load(f)
     
-    with open('resource_estimation_models/BRAMs_model.pkl', 'rb') as f:
+    with open(f'{models_dir}/BRAMs_model.pkl', 'rb') as f:
         BRAMs_model = pickle.load(f)
     
-    with open('resource_estimation_models/PS8LUTs_model.pkl', 'rb') as f:
+    with open(f'{models_dir}/PS8LUTs_model.pkl', 'rb') as f:
         PS8LUTs_model = pickle.load(f)
 
-    with open('resource_estimation_models/PS8FFs_model.pkl', 'rb') as f:
+    with open(f'{models_dir}/PS8FFs_model.pkl', 'rb') as f:
         PS8FFs_model = pickle.load(f)
 
     #with open('resource_estimation_models/WNS_model.pkl', 'rb') as f:
@@ -168,7 +173,7 @@ def main():
     max_trees_per_set = int(n_depths*(instruction_per_bram/(2**(max_depth-1))))
     necessary_set_of_pes = int(math.ceil(n_trees/max_trees_per_set))
     
-    n_paths, best_width, expected_consumption, expected_wns = get_best_architecture(width, max_depth, n_trees, necessary_set_of_pes, max_LUTs, max_FFs, max_BRAMs)
+    n_paths, best_width, expected_consumption, expected_wns = get_best_architecture(width, max_depth, n_trees, necessary_set_of_pes, max_LUTs, max_FFs, max_BRAMs, early_termination)
     
     print("N paths", n_paths)
     print("Best width", best_width)

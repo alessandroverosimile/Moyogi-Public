@@ -36,6 +36,7 @@ def main():
     early_termination = int(sys.argv[8])
     n_depths = max_depth - min_depth + 1
     frq = sys.argv[9]
+    n_sets = int(sys.argv[10])
 
     fsloader = jinja2.FileSystemLoader(r'./')
     env = jinja2.Environment(loader=fsloader)
@@ -61,9 +62,11 @@ def main():
     print("Execution with depth, n_trees, freq, n_paths, n_attr equals to ",  max_depth, n_trees, frq, n_paths, n_attr)
     
     #sys.exit() #activate to debug the resource estimation models
-    string = f"N paths: {n_paths}, Overall sets of PEs: {set_of_pes}, Width: {width}"
+    string = f"N paths: {n_paths}, Overall sets of PEs: {n_sets}, Width: {width}"
 
-    cmd = f'sbt "runMain YoseUe_SATL.VerilogGenerator {n_trees} {max_depth} {min_depth} {n_attr} {n_classes} {n_paths} {width} {necessary_set_of_pes} {early_termination} {max_votation}"'
+    # Per resource estimation model usa n_sets, per impl necessary_sets_of_pes
+    #cmd = f'sbt "runMain YoseUe_SATL.VerilogGenerator {n_trees} {max_depth} {min_depth} {n_attr} {n_classes} {n_paths} {width} {necessary_set_of_pes} {early_termination} {max_votation}"'
+    cmd = f'sbt "runMain YoseUe_SATL.VerilogGenerator {n_trees} {max_depth} {min_depth} {n_attr} {n_classes} {n_paths} {width} {n_sets} {early_termination} {max_votation}"'
     success = os.system(cmd)
 
     if(success > 0):
@@ -72,7 +75,7 @@ def main():
 
     os.chdir("../automation")
 
-    print("Total PEs ", set_of_pes*max_depth)
+    print("Total PEs ", n_sets*max_depth)
 
     if VIVADO_VERSION==2021.2:
         ps_version = 3
@@ -82,7 +85,7 @@ def main():
     template = env.get_template('vivadoScript.tcl.jinja')
     width_bytes = int(width/8)
     dma_bytes = int(dma_bits/8)
-    template.stream(n_pes=set_of_pes*max_depth, dma_bits=dma_bits, trgt_freq=frq, width=width_bytes, dma_bytes=dma_bytes,ps_version=ps_version).dump('vivadoScript.tcl')
+    template.stream(n_pes=n_sets*max_depth, dma_bits=dma_bits, trgt_freq=frq, width=width_bytes, dma_bytes=dma_bytes,ps_version=ps_version).dump('vivadoScript.tcl')
 
     cmd = f"/bin/bash -c 'source /home/xilinx/Vivado/{VIVADO_VERSION}/settings64.sh && vivado -nojournal -nolog -mode batch -source vivadoScript.tcl'"
     success = os.system(cmd)
@@ -102,35 +105,35 @@ def main():
     if(success > 0):
         print("Rename of .hwh failed")
 
-    cmd = 'mkdir ../Deploys/DeployParametricDepth' + str(max_depth) + 'Trees' + str(n_trees) + 'Frq' + str(frq) + 'Paths' + str(n_paths) + 'Attr' + str(n_attr) + '/'
+    cmd = 'mkdir ../Deploys/DeployParametricDepth' + str(max_depth) + 'Trees' + str(n_trees) + 'Frq' + str(frq) + 'Paths' + str(n_paths) + 'Attr' + str(n_attr) + 'Sets' + str(n_sets) + '/'
     success = os.system(cmd)
     if(success > 0):
         print("Directory not created")
         
-    cmd = 'cp ./block_diagram/block_diagram.gen/sources_1/bd/design_2/hw_handoff/design_2_wrapper.hwh ../Deploys/DeployParametricDepth' + str(max_depth) + 'Trees' + str(n_trees) + 'Frq' + str(frq) + 'Paths' + str(n_paths) + 'Attr' + str(n_attr) + '/'
+    cmd = 'cp ./block_diagram/block_diagram.gen/sources_1/bd/design_2/hw_handoff/design_2_wrapper.hwh ../Deploys/DeployParametricDepth' + str(max_depth) + 'Trees' + str(n_trees) + 'Frq' + str(frq) + 'Paths' + str(n_paths) + 'Attr' + str(n_attr) + 'Sets' + str(n_sets) + '/'
     success = os.system(cmd)
 
-    cmd = 'cp ./block_diagram/block_diagram.runs/impl_1/design_2_wrapper.bit ../Deploys/DeployParametricDepth' + str(max_depth) + 'Trees' + str(n_trees) + 'Frq' + str(frq) + 'Paths' + str(n_paths) + 'Attr' + str(n_attr) + '/'
+    cmd = 'cp ./block_diagram/block_diagram.runs/impl_1/design_2_wrapper.bit ../Deploys/DeployParametricDepth' + str(max_depth) + 'Trees' + str(n_trees) + 'Frq' + str(frq) + 'Paths' + str(n_paths) + 'Attr' + str(n_attr) + 'Sets' + str(n_sets) + '/'
     success = os.system(cmd)
     if(success > 0):
         print("'build' failed")
-        cmd = '>> ../Deploys/DeployParametricDepth' + str(max_depth) + 'Trees' + str(n_trees) + 'Frq' + str(frq) + 'Paths' + str(n_paths) + 'Attr' + str(n_attr) + 'Attr' + str(n_attr) + '/FAIL.txt'
+        cmd = '>> ../Deploys/DeployParametricDepth' + str(max_depth) + 'Trees' + str(n_trees) + 'Frq' + str(frq) + 'Paths' + str(n_paths) + 'Attr' + str(n_attr) + 'Attr' + str(n_attr) + 'Sets' + str(n_sets) + '/FAIL.txt'
         os.system(cmd)
 
-    cmd = 'cp ./block_diagram/block_diagram.gen/utilization_report.txt ../Deploys/DeployParametricDepth' + str(max_depth) + 'Trees' + str(n_trees) + 'Frq' + str(frq) + 'Paths' + str(n_paths) + 'Attr' + str(n_attr) + '/'
+    cmd = 'cp ./block_diagram/block_diagram.gen/utilization_report.txt ../Deploys/DeployParametricDepth' + str(max_depth) + 'Trees' + str(n_trees) + 'Frq' + str(frq) + 'Paths' + str(n_paths) + 'Attr' + str(n_attr) + 'Sets' + str(n_sets) + '/'
     os.system(cmd)
     if(success > 0):
         print("Utilization report not created")
 
-    cmd = 'cp ./block_diagram/block_diagram.gen/timing_report.txt ../Deploys/DeployParametricDepth' + str(max_depth) + 'Trees' + str(n_trees) + 'Frq' + str(frq) + 'Paths' + str(n_paths) + 'Attr' + str(n_attr) + '/'
+    cmd = 'cp ./block_diagram/block_diagram.gen/timing_report.txt ../Deploys/DeployParametricDepth' + str(max_depth) + 'Trees' + str(n_trees) + 'Frq' + str(frq) + 'Paths' + str(n_paths) + 'Attr' + str(n_attr) + 'Sets' + str(n_sets) + '/'
     os.system(cmd)
     if(success > 0):
         print("Timing report not created")
 
-    cmd = "echo " + string + " > ../Deploys/DeployParametricDepth" + str(max_depth) + 'Trees' + str(n_trees) + 'Frq' + str(frq) + 'Paths' + str(n_paths) + 'Attr' + str(n_attr) + '/description.txt' 
+    cmd = "echo " + string + " > ../Deploys/DeployParametricDepth" + str(max_depth) + 'Trees' + str(n_trees) + 'Frq' + str(frq) + 'Paths' + str(n_paths) + 'Attr' + str(n_attr) + 'Sets' + str(n_sets) + '/description.txt' 
     os.system(cmd)
 
-    print("Synthesis with " + str(max_depth) + " depth, " + str(n_trees) + " estimators in " + str(n_paths) + " paths with " + str(n_attr) + " attributes completed")
+    print("Synthesis with depth " + str(max_depth) + ", " + str(n_trees) + " estimators in " + str(n_paths) + " paths with " + str(n_attr) + " attributes and " + str(n_sets) + " sets completed")
 
 if __name__ == "__main__":
     main()
